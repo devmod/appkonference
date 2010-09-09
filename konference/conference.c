@@ -1419,7 +1419,7 @@ int show_conference_list ( int fd, const char *name )
 
 	return 1 ;
 }
-
+#ifdef	MANAGER_COMMANDS
 /* Dump list of conference info */
 int manager_conference_list( struct mansession *s, const struct message *m )
 {
@@ -1523,7 +1523,7 @@ int manager_conference_end(struct mansession *s, const struct message *m)
 	astman_send_ack(s, m, "Conference terminated");
 	return RESULT_SUCCESS;
 }
-
+#endif
 int kick_member (  const char* confname, int user_id)
 {
 	struct ast_conf_member *member;
