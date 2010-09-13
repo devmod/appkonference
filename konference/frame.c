@@ -195,14 +195,14 @@ conf_frame* mix_multiple_speakers(
 	// no frames to mix
 	if ( ( frames_in == NULL ) || ( frames_in->fr == NULL ) )
 	{
-		DEBUG("passed spoken frame list was NULL\n") ;
+		ast_log( LOG_ERROR, "passed spoken frame list was NULL\n") ;
 		return NULL ;
 	}
 
 	// if less than two speakers, then no frames to mix
 	if ( speakers < 2 )
 	{
-		DEBUG("mix_multiple_speakers() called with less than two speakers\n") ;
+		ast_log( LOG_ERROR, "mix_multiple_speakers() called with less than two speakers\n") ;
 		return NULL ;
 	}
 #endif // APP_KONFERENCE_DEBUG
@@ -387,13 +387,14 @@ conf_frame* mix_multiple_speakers(
 
 struct ast_frame* convert_frame_to_slinear( struct ast_trans_pvt* trans, struct ast_frame* fr )
 {
+#ifdef APP_KONFERENCE_DEBUG
 	// check for null frame
 	if ( fr == NULL )
 	{
 		ast_log( LOG_ERROR, "unable to translate null frame to slinear\n" ) ;
 		return NULL ;
 	}
-
+#endif
 	// we don't need to duplicate this frame since
 	// the normal translation would free it anyway, so
 	// we'll just pretend we free'd and malloc'd a new one.
@@ -417,10 +418,11 @@ struct ast_frame* convert_frame_to_slinear( struct ast_trans_pvt* trans, struct 
 
 struct ast_frame* convert_frame_from_slinear( struct ast_trans_pvt* trans, struct ast_frame* fr )
 {
+#ifdef APP_KONFERENCE_DEBUG
 	// check for null translator ( after we've checked that we need to translate )
 	if ( trans == NULL )
 	{
-		//ast_log( LOG_ERROR, "unable to translate frame with null translation path\n" ) ;
+		ast_log( LOG_ERROR, "unable to translate frame with null translation path\n" ) ;
 		return fr ;
 	}
 
@@ -430,7 +432,7 @@ struct ast_frame* convert_frame_from_slinear( struct ast_trans_pvt* trans, struc
 		ast_log( LOG_ERROR, "unable to translate null slinear frame\n" ) ;
 		return NULL ;
 	}
-
+#endif
 	// if the frame is not slinear, return an error
 #ifndef	AC_USE_G722
 	if ( fr->subclass != AST_FORMAT_SLINEAR )
@@ -448,6 +450,7 @@ struct ast_frame* convert_frame_from_slinear( struct ast_trans_pvt* trans, struc
 
 struct ast_frame* convert_frame( struct ast_trans_pvt* trans, struct ast_frame* fr )
 {
+#ifdef APP_KONFERENCE_DEBUG
 	if ( trans == NULL )
 	{
 		ast_log( LOG_WARNING, "unable to convert frame with null translator\n" ) ;
@@ -459,7 +462,7 @@ struct ast_frame* convert_frame( struct ast_trans_pvt* trans, struct ast_frame* 
 		ast_log( LOG_WARNING, "unable to convert null frame\n" ) ;
 		return NULL ;
 	}
-
+#endif
 	// convert the frame
 	struct ast_frame* translated_frame = ast_translate( trans, fr, 1 ) ;
 
@@ -477,17 +480,21 @@ struct ast_frame* convert_frame( struct ast_trans_pvt* trans, struct ast_frame* 
 conf_frame* delete_conf_frame( conf_frame* cf )
 {
   int c;
+#ifdef APP_KONFERENCE_DEBUG
 	// check for null frames
 	if ( cf == NULL )
 	{
-		DEBUG("unable to delete null conf frame\n") ;
+		ast_log( LOG_ERROR, "unable to delete null conf frame\n") ;
 		return NULL ;
 	}
 
 	// check for frame marked as static
 	if ( cf->static_frame == 1 )
+	{
+		ast_log( LOG_ERROR, "unable to free static conf frame\n" ) ;
 		return NULL ;
-
+	}
+#endif
 	if ( cf->fr != NULL )
 	{
 		ast_frfree( cf->fr ) ;
@@ -542,9 +549,9 @@ conf_frame* create_conf_frame( struct ast_conf_member* member, conf_frame* next,
 
 	cf->prev = NULL ;
 	cf->next = next ;
-
+#ifdef APP_KONFERENCE_DEBUG
 	cf->static_frame = 0 ;
-
+#endif
 	// establish relationship to 'next'
 	if ( next != NULL ) next->prev = cf ;
 
@@ -566,7 +573,7 @@ conf_frame* copy_conf_frame( conf_frame* src )
 
 	if ( src == NULL )
 	{
-		DEBUG("unable to copy null conf frame\n") ;
+		ast_log( LOG_ERROR, "unable to copy null conf frame\n") ;
 		return NULL ;
 	}
 #endif
@@ -718,9 +725,10 @@ conf_frame* get_silent_frame( void )
 
 		// init the 'converted' slinear silent frame
 		static_silent_frame->converted[ AC_SLINEAR_INDEX ] = get_silent_slinear_frame() ;
-
+#ifdef APP_KONFERENCE_DEBUG
 		// mark frame as static so it's not deleted
 		static_silent_frame->static_frame = 1 ;
+#endif
 	}
 
 	return static_silent_frame ;

@@ -639,7 +639,7 @@ int member_exec( struct ast_channel* chan, void* data )
 	int left = 0 ;
 	int res;
 
-	DEBUG("Begin processing member thread, channel => %s\n", chan->name) ;
+	DEBUG("begin processing member thread, channel => %s\n", chan->name) ;
 
 	//
 	// If the call has not yet been answered, answer the call
@@ -740,7 +740,7 @@ int member_exec( struct ast_channel* chan, void* data )
 	AST_LIST_INSERT_HEAD (member->bucket, member, hash_entry) ;
 	AST_LIST_UNLOCK (member->bucket ) ;
 
-	//DEBUG("Added %s to the channel table, bucket => %ld\n", member->chan->name, member->bucket - channel_table) ;
+	DEBUG("added %s to the channel table, bucket => %ld\n", member->chan->name, member->bucket - channel_table) ;
 
 	manager_event(
 		EVENT_FLAG_CALL,
@@ -1238,7 +1238,7 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 		}
 		else
 		{
-			DEBUG("member dsp initialized, channel => %s, v => %d, d => %d, a => %d\n", chan->name, member->vad_flag, member->denoise_flag, member->agc_flag) ;
+			DEBUG("member dsp initialized, v => %d, d => %d, a => %d\n", member->vad_flag, member->denoise_flag, member->agc_flag) ;
 
 			// set speex preprocessor options
 			speex_preprocess_ctl( member->dsp, SPEEX_PREPROCESS_SET_VAD, &(member->vad_flag) ) ;
@@ -1416,7 +1416,9 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 
 	if (member->smooth_size_in > 0){
 		member->inSmoother = ast_smoother_new(member->smooth_size_in);
+#ifdef	SMOOTHER_DEBUG
 		DEBUG("created smoother(%d) for %d\n", member->smooth_size_in , member->read_format) ;
+#endif
 	}
 
 	//
@@ -1435,13 +1437,13 @@ struct ast_conf_member* delete_member( struct ast_conf_member* member )
 
 	// !!! CRASH TEST !!!
 	// *((int *)0) = 0;
-
+#ifdef	APP_KONFERENCE_DEBUG
 	if ( member == NULL )
 	{
 		ast_log( LOG_WARNING, "unable to the delete null member\n" ) ;
 		return NULL ;
 	}
-
+#endif
 	ast_mutex_lock ( &member->lock ) ;
 
 	member->delete_flag = 1 ;
@@ -1466,7 +1468,7 @@ struct ast_conf_member* delete_member( struct ast_conf_member* member )
 	if ( member->flags != NULL )
 	{
 		// !!! DEBUGING !!!
-		DEBUG("freeing member flags, name => %s\n", member->chan->name) ;
+		DEBUG("freeing member flags\n") ;
 		free( member->flags ) ;
 	}
 
@@ -1477,7 +1479,7 @@ struct ast_conf_member* delete_member( struct ast_conf_member* member )
 	conf_frame* cf ;
 
 	// !!! DEBUGING !!!
-	DEBUG("deleting member input frames, name => %s\n", member->chan->name) ;
+	DEBUG("deleting member input frames\n") ;
 
 	// incoming frames
 	cf = member->inFrames ;
@@ -1501,7 +1503,7 @@ struct ast_conf_member* delete_member( struct ast_conf_member* member )
 	}
 #endif
 	// !!! DEBUGING !!!
-	DEBUG("deleting member output frames, name => %s\n", member->chan->name) ;
+	DEBUG("deleting member output frames\n") ;
 
 	// outgoing frames
 	cf = member->outFrames ;
@@ -1528,13 +1530,13 @@ struct ast_conf_member* delete_member( struct ast_conf_member* member )
 	if ( member->dsp != NULL )
 	{
 		// !!! DEBUGING !!!
-		DEBUG("destroying member preprocessor, name => %s\n", member->chan->name) ;
+		DEBUG("destroying member preprocessor\n") ;
 		speex_preprocess_state_destroy( member->dsp ) ;
 	}
 #endif
 
 	// !!! DEBUGING !!!
-	DEBUG("freeing member translator paths, name => %s\n", member->chan->name) ;
+	DEBUG("freeing member translator paths\n") ;
 
 	// free the mixing translators
 	ast_translator_free_path( member->to_slinear ) ;
@@ -2092,8 +2094,9 @@ int queue_incoming_frame( struct ast_conf_member* member, struct ast_frame* fr )
 		// smoother tmp frame
 		struct ast_frame *sfr;
 		int multiple = 1;
+#ifdef	SMOOTHER_DEBUG
 		int i=0;
-
+#endif
 #if 0
 		if ( (member->smooth_size_in > 0 ) && (member->smooth_size_in * member->smooth_multiple != fr->datalen) )
 		{
@@ -2120,17 +2123,19 @@ int queue_incoming_frame( struct ast_conf_member* member, struct ast_frame* fr )
 #endif
 
 		ast_smoother_feed( member->inSmoother, fr );
+#ifdef	SMOOTHER_DEBUG
 DEBUG("SMOOTH:Feeding frame into inSmoother, timestamp => %ld.%ld\n", fr->delivery.tv_sec, fr->delivery.tv_usec) ;
-
+#endif
 		if ( multiple > 1 )
 			fr->samples /= multiple;
 
 		// read smoothed version of frames, add to queue
 		while( ( sfr = ast_smoother_read( member->inSmoother ) ) ){
-
+#ifdef  SMOOTHER_DEBUG
 			++i;
 DEBUG("\treading new frame [%d] from smoother, inFramesCount[%d], \n\tsfr->frametype -> %d , sfr->subclass -> %d , sfr->datalen => %d sfr->samples => %d\n", i , member->inFramesCount , sfr->frametype, sfr->subclass, sfr->datalen, sfr->samples) ;
 DEBUG("SMOOTH:Reading frame from inSmoother, i=>%d, timestamp => %ld.%ld\n",i, sfr->delivery.tv_sec, sfr->delivery.tv_usec);
+#endif
 			conf_frame* cfr = create_conf_frame( member, member->inFrames, sfr ) ;
 			if ( cfr == NULL )
 			{

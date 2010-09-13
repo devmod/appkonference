@@ -179,3 +179,7 @@ time when members are listed.
 
 Deprecated management commands KonferenceList and KonferenceEnd as similar
 functions are available from the command line and via the AMI command action.
+
+Added a compiler flag for ifdef'ing out smoother debug logging, ifdef'ed the
+conference static frame indicator so that the check is now debug only, and
+fixed some of the debug messages.

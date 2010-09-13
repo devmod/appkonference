@@ -91,7 +91,7 @@ static void conference_exec( struct ast_conference *conf )
 	int speaker_count ;
 	int listener_count ;
 
-	//DEBUG("Enter conference_exec\n") ;
+	DEBUG("enter conference_exec\n") ;
 
 	// timer timestamps
 #ifdef	VIDEO
@@ -546,7 +546,7 @@ done42:
 	// exit the conference thread
 	//
 
-	DEBUG("Exit conference_exec\n") ;
+	DEBUG("exit conference_exec\n") ;
 
 	// exit the thread
 	pthread_exit( NULL ) ;
@@ -587,14 +587,14 @@ struct ast_conference* join_conference( struct ast_conf_member* member, char* co
 
 
 	// look for an existing conference
-	DEBUG("attempting to find requested conference\n") ;
+	DEBUG("finding requested conference %s\n", conf_name) ;
 	conf = find_conf( conf_name ) ;
 
 	// unable to find an existing conference, try to create one
 	if ( conf == NULL )
 	{
 		// create a new conference
-		DEBUG("attempting to create requested conference\n") ;
+		DEBUG("creating requested conference %s\n", conf_name) ;
 
 		// create the new conference with one member
 		conf = create_conf( conf_name, member ) ;
@@ -650,8 +650,6 @@ static struct ast_conference* find_conf( const char* name )
 // This function should be called with conflist_lock held
 static struct ast_conference* create_conf( char* name, struct ast_conf_member* member )
 {
-	DEBUG("entered create_conf, name => %s\n", name) ;
-
 	//
 	// allocate memory for conference
 	//
@@ -789,7 +787,9 @@ static struct ast_conference* create_conf( char* name, struct ast_conf_member* m
 	AST_LIST_INSERT_HEAD (conf->bucket, conf, hash_entry) ;
 	AST_LIST_UNLOCK (conf->bucket ) ;
 
-	DEBUG("added new conference to conflist, name => %s\n", name) ;
+	DEBUG("added %s to the channel table, bucket => %ld\n", conf->name, conf->bucket - conference_table) ;
+
+	DEBUG("added %s to conference list\n", name) ;
 
 	// count new conference
 	++conference_count ;
@@ -801,9 +801,9 @@ static struct ast_conference* create_conf( char* name, struct ast_conf_member* m
 struct ast_conference *remove_conf( struct ast_conference *conf )
 {
 
-	DEBUG("attempting to remove conference, name => %s\n", conf->name) ;
-
 	struct ast_conference *conf_temp ;
+
+	DEBUG("removing conference %s\n", conf->name) ;
 
 	//
 	// do some frame clean up
@@ -829,15 +829,16 @@ struct ast_conference *remove_conf( struct ast_conference *conf )
 		long tt = ast_tvdiff_ms(ast_tvnow(),
 				conf->stats.time_entered) / 1000;
 
-		DEBUG("conference accounting, fi => %ld, fo => %ld, fm => %ld, tt => %ld\n", conf->stats.frames_in, conf->stats.frames_out, conf->stats.frames_mixed, tt) ;
+		DEBUG("conference accounting, conference => %s, fi => %ld, fo => %ld, fm => %ld, tt => %ld\n", conf->name, conf->stats.frames_in, conf->stats.frames_out, conf->stats.frames_mixed, tt) ;
 
 	}
 #endif
-	DEBUG("removed conference, name => %s\n", conf->name) ;
 
 	AST_LIST_LOCK (conf->bucket ) ;
 	AST_LIST_REMOVE (conf->bucket, conf, hash_entry) ;
 	AST_LIST_UNLOCK (conf->bucket ) ;
+
+	DEBUG("removed %s from the conference table, bucket => %ld\n", conf->name, conf->bucket - conference_table) ;
 
 	// unlock and destroy read/write lock
 	ast_rwlock_unlock( &conf->lock ) ;
@@ -898,7 +899,7 @@ int end_conference(const char *name, int hangup )
 	conf = find_conf(name);
 	if ( conf == NULL )
 	{
-		DEBUG("could not find conference\n") ;
+		DEBUG("could not find conference %s\n", name) ;
 
 		// release the conference list lock
 		ast_mutex_unlock(&conflist_lock);
@@ -945,12 +946,13 @@ int end_conference(const char *name, int hangup )
 // This function should be called with conflist_lock held
 static void add_member( struct ast_conf_member *member, struct ast_conference *conf )
 {
+#ifdef	APP_KONFERENCE_DEBUG
 	if ( conf == NULL )
 	{
 		ast_log( LOG_ERROR, "unable to add member to NULL conference\n" ) ;
 		return ;
 	}
-
+#endif
 	// acquire the conference lock
 	ast_rwlock_wrlock( &conf->lock ) ;
 
@@ -1056,7 +1058,7 @@ static void add_member( struct ast_conf_member *member, struct ast_conference *c
 	// release the conference lock
 	ast_rwlock_unlock( &conf->lock ) ;
 
-	DEBUG("member added to conference, name => %s\n", conf->name) ;
+	DEBUG("added member to conference %s\n", conf->name) ;
 
 	return ;
 }
@@ -1066,7 +1068,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 	int membercount ;
 	short moderators ;
 	long tt ;
-
+#ifdef	APP_KONFERENCE_DEBUG
 	// check for member
 	if ( member == NULL )
 	{
@@ -1080,7 +1082,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 		ast_log( LOG_WARNING, "unable to remove member from NULL conference\n" ) ;
 		return  ;
 	}
-
+#endif
 	//
 	// loop through the member list looking
 	// for the requested member
@@ -1213,7 +1215,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 #endif
 	ast_rwlock_unlock( &conf->lock );
 
-	DEBUG("removed member from conference, name => %s, remaining => %d\n", conf_name, membercount) ;
+	DEBUG("removed member from conference %s, remaining members => %d\n", conf_name, membercount) ;
 
 	// remove member from channel table
 	if ( member->bucket != NULL )
@@ -1221,7 +1223,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 		AST_LIST_LOCK (member->bucket ) ;
 		AST_LIST_REMOVE (member->bucket, member, hash_entry) ;
 		AST_LIST_UNLOCK (member->bucket ) ;
-		DEBUG("Removed %s from the channel table, bucket => %ld\n", member->chan->name, member->bucket - channel_table) ;
+		DEBUG("removed %s from the channel table, bucket => %ld\n", member->chan->name, member->bucket - channel_table) ;
 	}
 
 	// output to manager...
@@ -3224,7 +3226,7 @@ int hash(const char *name)
 			h ^= g >> 24;
 		h &= ~g;
 	}
-	DEBUG("Hashed name: %s to 0x%08x\n", name, h) ;
+	//DEBUG("Hashed name: %s to 0x%08x\n", name, h) ;
 	return h;
 }
 
