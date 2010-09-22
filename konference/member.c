@@ -2933,7 +2933,7 @@ int queue_frame_for_listener(
 			}
 
 			// convert using the conference's translation path
-			qf = convert_frame_from_slinear( conf->from_slinear_paths[ member->write_format_index ], qf ) ;
+			qf = convert_frame( conf->from_slinear_paths[ member->write_format_index ], qf ) ;
 
 			// store the converted frame
 			// ( the frame will be free'd next time through the loop )
@@ -3047,14 +3047,14 @@ int queue_frame_for_speaker(
 
 			if (member->listen_volume != 0)
 			{
-				ast_frame_adjust_volume(frame->fr, member->listen_volume);
+				ast_frame_adjust_volume(qf, member->listen_volume);
 			}
 
 			//
 			// convert frame to member's write format
 			// ( calling ast_frdup() to make sure the translator's copy sticks around )
 			//
-			qf = convert_frame_from_slinear( member->from_slinear, qf ) ;
+			qf = convert_frame( member->from_slinear, qf ) ;
 
 			if ( qf != NULL )
 			{

@@ -316,7 +316,7 @@ static void conference_exec( struct ast_conference *conf )
 			//---------------//
 
 			// mix frames and get batch of outgoing frames
-			send_frames = mix_frames( spoken_frames, speaker_count, listener_count, conf->volume ) ;
+			send_frames = mix_frames( spoken_frames, speaker_count, listener_count, conf->volume, conf->membercount ) ;
 
 			// accounting: if there are frames, count them as one incoming frame
 			if ( send_frames != NULL )
@@ -603,8 +603,6 @@ struct ast_conference* join_conference( struct ast_conf_member* member, char* co
 		// otherwise set the member's pointer to its conference
 		if ( conf == NULL )
 			ast_log( LOG_ERROR, "unable to find or create requested conference\n" ) ;
-		else
-			member->conf = conf ;
 	}
 	else
 	{

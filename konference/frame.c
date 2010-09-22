@@ -31,7 +31,7 @@
 #include "asterisk/autoconfig.h"
 #include "frame.h"
 
-conf_frame* mix_frames( conf_frame* frames_in, int speaker_count, int listener_count, int volume )
+conf_frame* mix_frames( conf_frame* frames_in, int speaker_count, int listener_count, int volume, int membercount )
 {
 	if ( frames_in == NULL )
 		return NULL ;
@@ -55,7 +55,7 @@ conf_frame* mix_frames( conf_frame* frames_in, int speaker_count, int listener_c
 	else if ( speaker_count == 1 )
 	{
 		// pass-through frames
-		frames_out = mix_single_speaker( frames_in, volume ) ;
+		frames_out = mix_single_speaker( frames_in, volume, membercount ) ;
 		//printf("mix single speaker\n");
 	}
 	else
@@ -66,7 +66,7 @@ conf_frame* mix_frames( conf_frame* frames_in, int speaker_count, int listener_c
 	return frames_out ;
 }
 
-conf_frame* mix_single_speaker( conf_frame* frames_in, int volume )
+conf_frame* mix_single_speaker( conf_frame* frames_in, int volume, int membercount )
 {
 #ifdef APP_KONFERENCE_DEBUG
 	//DEBUG("returning single spoken frame\n") ;
@@ -102,7 +102,7 @@ conf_frame* mix_single_speaker( conf_frame* frames_in, int volume )
 	frames_in->converted[ frames_in->member->read_format_index ] = ast_frdup( frames_in->fr ) ;
 
 	// convert frame to slinear; otherwise, drop the frame
-	if (!(frames_in->fr = convert_frame_to_slinear( frames_in->member->to_slinear, frames_in->fr)))
+	if (!(frames_in->fr = convert_frame( frames_in->member->to_slinear, frames_in->fr)))
 	{
 		ast_log( LOG_WARNING, "mix_single_speaker: unable to convert frame to slinear\n" ) ;
 		return NULL ;
@@ -122,7 +122,8 @@ conf_frame* mix_single_speaker( conf_frame* frames_in, int volume )
 	else
 	{
 		// speaker is either a spyee or a spyer
-		if ( frames_in->member->spyee_channel_name == NULL )
+		if ( frames_in->member->spyee_channel_name == NULL
+			&& membercount > 2 )
 		{
 			conf_frame *spy_frame = copy_conf_frame(frames_in);
 
@@ -244,7 +245,7 @@ conf_frame* mix_multiple_speakers(
 		else
 		{
 			//DEBUG("converting frame to slinear, channel => %s\n", cf_spoken->member->channel_name) ;
-			if ( !(cf_spoken->fr = convert_frame_to_slinear( cf_spoken->member->to_slinear, cf_spoken->fr)) )
+			if ( !(cf_spoken->fr = convert_frame( cf_spoken->member->to_slinear, cf_spoken->fr)) )
 			{
 				ast_log( LOG_WARNING, "mix_multiple_speakers: unable to convert frame to slinear\n" ) ;
 				continue;
@@ -384,94 +385,32 @@ conf_frame* mix_multiple_speakers(
 	return cf_sendFrames ;
 }
 
-
-struct ast_frame* convert_frame_to_slinear( struct ast_trans_pvt* trans, struct ast_frame* fr )
-{
-#ifdef APP_KONFERENCE_DEBUG
-	// check for null frame
-	if ( fr == NULL )
-	{
-		ast_log( LOG_ERROR, "unable to translate null frame to slinear\n" ) ;
-		return NULL ;
-	}
-#endif
-	// we don't need to duplicate this frame since
-	// the normal translation would free it anyway, so
-	// we'll just pretend we free'd and malloc'd a new one.
-#ifndef	AC_USE_G722
-	if ( fr->subclass == AST_FORMAT_SLINEAR )
-#else
-	if ( fr->subclass == AST_FORMAT_SLINEAR16 )
-#endif
-		return fr ;
-
-	// check for null translator ( after we've checked that we need to translate )
-	if ( trans == NULL )
-	{
-		ast_log( LOG_ERROR, "unable to translate frame with null translation path\n" ) ;
-		return fr ;
-	}
-
-	// return the converted frame
-	return convert_frame( trans, fr ) ;
-}
-
-struct ast_frame* convert_frame_from_slinear( struct ast_trans_pvt* trans, struct ast_frame* fr )
-{
-#ifdef APP_KONFERENCE_DEBUG
-	// check for null translator ( after we've checked that we need to translate )
-	if ( trans == NULL )
-	{
-		ast_log( LOG_ERROR, "unable to translate frame with null translation path\n" ) ;
-		return fr ;
-	}
-
-	// check for null frame
-	if ( fr == NULL )
-	{
-		ast_log( LOG_ERROR, "unable to translate null slinear frame\n" ) ;
-		return NULL ;
-	}
-#endif
-	// if the frame is not slinear, return an error
-#ifndef	AC_USE_G722
-	if ( fr->subclass != AST_FORMAT_SLINEAR )
-#else
-	if ( fr->subclass != AST_FORMAT_SLINEAR16 )
-#endif
-	{
-		ast_log( LOG_ERROR, "unable to translate non-slinear frame\n" ) ;
-		return NULL ;
-	}
-
-	// return the converted frame
-	return convert_frame( trans, fr ) ;
-}
-
 struct ast_frame* convert_frame( struct ast_trans_pvt* trans, struct ast_frame* fr )
 {
-#ifdef APP_KONFERENCE_DEBUG
 	if ( trans == NULL )
 	{
-		ast_log( LOG_WARNING, "unable to convert frame with null translator\n" ) ;
-		return NULL ;
+		return fr ;
 	}
 
+#ifdef APP_KONFERENCE_DEBUG
 	if ( fr == NULL )
 	{
 		ast_log( LOG_WARNING, "unable to convert null frame\n" ) ;
 		return NULL ;
 	}
 #endif
+
 	// convert the frame
 	struct ast_frame* translated_frame = ast_translate( trans, fr, 1 ) ;
 
+#ifdef APP_KONFERENCE_DEBUG
 	// check for errors
 	if ( translated_frame == NULL )
 	{
 		ast_log( LOG_ERROR, "unable to translate frame\n" ) ;
 		return NULL ;
 	}
+#endif
 
 	// return the translated frame
 	return translated_frame ;

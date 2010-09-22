@@ -55,7 +55,6 @@ struct ast_conf_member
 	ast_mutex_t lock ; // member data mutex
 
 	struct ast_channel* chan ; // member's channel
-	struct ast_conference* conf ; // member's conference
 
 	ast_cond_t delete_var ; // delete cv
 	char delete_flag ; // delete flag

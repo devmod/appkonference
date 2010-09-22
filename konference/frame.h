@@ -43,19 +43,17 @@
 //
 
 // mixing
-conf_frame* mix_frames( conf_frame* frames_in, int speaker_count, int listener_count, int volume ) ;
+conf_frame* mix_frames( conf_frame* frames_in, int speaker_count, int listener_count, int volume, int membercount ) ;
 
 conf_frame* mix_multiple_speakers( conf_frame* frames_in, int speakers, int listeners, int volume ) ;
-conf_frame* mix_single_speaker( conf_frame* frames_in, int volume ) ;
+conf_frame* mix_single_speaker( conf_frame* frames_in, int volume, int membercount ) ;
 
 // frame creation and deletion
 conf_frame* create_conf_frame( struct ast_conf_member* member, conf_frame* next, const struct ast_frame* fr ) ;
 conf_frame* delete_conf_frame( conf_frame* cf ) ;
 conf_frame* copy_conf_frame( conf_frame* src ) ;
 
-// convert frame functions
-struct ast_frame* convert_frame_to_slinear( struct ast_trans_pvt* trans, struct ast_frame* fr ) ;
-struct ast_frame* convert_frame_from_slinear( struct ast_trans_pvt* trans, struct ast_frame* fr ) ;
+// convert frame function
 struct ast_frame* convert_frame( struct ast_trans_pvt* trans, struct ast_frame* fr ) ;
 
 #ifdef	TEXT
