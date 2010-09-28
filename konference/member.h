@@ -133,14 +133,16 @@ struct ast_conf_member
 	conf_frame* inTextFramesTail ;
 	unsigned int inTextFramesCount ;
 #endif
-
+#ifdef	SMOOTHER
 	// input/output smoother
 	struct ast_smoother *inSmoother;
+#ifdef	PACKER
 	struct ast_packer *outPacker;
+#endif
 	int smooth_size_in;
 	int smooth_size_out;
 	int smooth_multiple;
-
+#endif
 	// frames needed by conference_exec
 	unsigned int inFramesNeeded ;
 #ifdef	VIDEO
@@ -383,6 +385,7 @@ void start_video(struct ast_conf_member *member);
 void stop_video(struct ast_conf_member *member);
 #endif
 
+#ifdef	PACKER
 //
 // packer functions
 //
@@ -396,4 +399,6 @@ extern void ast_packer_free(struct ast_packer *s);
 extern void ast_packer_reset(struct ast_packer *s, int bytes);
 extern int ast_packer_feed(struct ast_packer *s, const struct ast_frame *f);
 extern struct ast_frame *ast_packer_read(struct ast_packer *s);
+#endif
+
 #endif

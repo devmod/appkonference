@@ -62,6 +62,11 @@
 
 #if (SILDET == 2)
 #include "libspeex/speex_preprocess.h"
+
+// number of times the last non-silent frame should be
+// repeated after silence starts
+#define AST_CONF_CACHE_LAST_FRAME 1
+
 #endif
 
 //
@@ -74,14 +79,6 @@
 #else
 #define	DEBUG(...)
 #endif
-
-//
-// feature defines
-//
-
-// number of times the last non-silent frame should be
-// repeated after silence starts
-#define AST_CONF_CACHE_LAST_FRAME 1
 
 //
 // debug defines

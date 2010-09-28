@@ -37,7 +37,9 @@
 // process an incoming frame.  Returns 0 normally, 1 if hangup was received.
 static int process_incoming(struct ast_conf_member *member, struct ast_conference *conf, struct ast_frame *f)
 {
+#if ( SILDET == 2 )
 	int silent_frame = 0;
+#endif
 #ifdef	VIDEO
 	struct ast_conf_member *src_member ;
 #endif
@@ -190,17 +192,15 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 		// this is a listen-only user, ignore the frame
 		//DEBUG("Listen only user frame") ;
 		ast_frfree( f ) ;
-		f = NULL ;
 	}
 	else if ( f->frametype == AST_FRAME_VOICE )
 	{	//DEBUG("Got voice frame") ;
-		// reset silence detection flag
-		silent_frame = 0 ;
-
 		// accounting: count the incoming frame
 		member->frames_in++ ;
 
 #if ( SILDET == 2 )
+		// reset silence detection flag
+		silent_frame = 0 ;
 		//
 		// make sure we have a valid dsp and frame type
 		//
@@ -266,14 +266,12 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 				member->ignore_speex_count = AST_CONF_SKIP_SPEEX_PREPROCESS ;
 			}
 		}
-#endif
 		if ( !silent_frame )
+#endif
 			queue_incoming_frame( member, f );
 
 		// free the original frame
 		ast_frfree( f ) ;
-		f = NULL ;
-
 	}
 #ifdef	VIDEO
 	else if (f->frametype == AST_FRAME_VIDEO)
@@ -282,7 +280,6 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 
 		// free the original frame
 		ast_frfree( f ) ;
-		f = NULL ;
 
 	}
 #endif
@@ -295,7 +292,6 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 
 		// free the frame
 		ast_frfree( f ) ;
-		f = NULL ;
 
 		// break out of the while ( 42 == 42 )
 		return 1;
@@ -314,7 +310,6 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 
 		// free the original frame
 		ast_frfree( f ) ;
-		f = NULL ;
 	}
 #endif
 #ifdef	VIDEO
@@ -363,14 +358,12 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 			ast_mutex_unlock(&member->lock);
 		}
 		ast_frfree(f);
-		f = NULL;
 	}
 #endif
 #endif
 	else {
 		// undesirables
 		ast_frfree( f ) ;
-		f = NULL ;
 	}
 
 	return 0;
@@ -1365,7 +1358,7 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 		default:
 			break;
 	}
-
+#ifdef	SMOOTHER
 	// smoother defaults.
 	member->smooth_multiple = 1;
 	member->smooth_size_in = -1;
@@ -1420,7 +1413,7 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 		DEBUG("created smoother(%d) for %d\n", member->smooth_size_in , member->read_format) ;
 #endif
 	}
-
+#endif
 	//
 	// finish up
 	//
@@ -1488,12 +1481,14 @@ struct ast_conf_member* delete_member( struct ast_conf_member* member )
 	{
 		cf = delete_conf_frame( cf ) ;
 	}
-
+#ifdef	SMOOTHER
 	if (member->inSmoother != NULL)
 		ast_smoother_free(member->inSmoother);
+#endif
+#ifdef	PACKER
 	if (member->outPacker != NULL)
 		ast_packer_free(member->outPacker);
-
+#endif
 #ifdef	VIDEO
 	cf = member->inVideoFrames ;
 
@@ -2067,9 +2062,10 @@ int queue_incoming_frame( struct ast_conf_member* member, struct ast_frame* fr )
 	//
 	// create new conf frame from passed data frame
 	//
-
+#ifdef	SMOOTHER
 	// ( member->inFrames may be null at this point )
 	if (member->inSmoother == NULL ){
+#endif
 		conf_frame* cfr = create_conf_frame( member, member->inFrames, fr ) ;
 		if ( cfr == NULL )
 		{
@@ -2088,6 +2084,7 @@ int queue_incoming_frame( struct ast_conf_member* member, struct ast_frame* fr )
 		}
 		member->inFrames = cfr ;
 		member->inFramesCount++ ;
+#ifdef	SMOOTHER
 	} else {
 		//feed frame(fr) into the smoother
 
@@ -2156,6 +2153,7 @@ DEBUG("SMOOTH:Reading frame from inSmoother, i=>%d, timestamp => %ld.%ld\n",i, s
 			member->inFramesCount++ ;
 		}
 	}
+#endif
 	ast_mutex_unlock(&member->lock);
 	return 0 ;
 }
@@ -2281,23 +2279,32 @@ int queue_outgoing_frame( struct ast_conf_member* member, const struct ast_frame
 		return -1 ;
 	}
 #endif
+#ifdef	PACKER
 	if ( ( member->outPacker == NULL ) && ( member->smooth_multiple > 1 ) && ( member->smooth_size_out > 0 ) ){
-		//DEBUG("creating outPacker with size => %d \n\t( multiple => %d ) * ( size => %d )\n", member->smooth_multiple * member-> smooth_size_out, member->smooth_multiple , member->smooth_size_out) ;
+#ifdef	PACKER_DEBUG
+		DEBUG("creating outPacker with size => %d \n\t( multiple => %d ) * ( size => %d )\n", member->smooth_multiple * member-> smooth_size_out, member->smooth_multiple , member->smooth_size_out) ;
+#endif
 		member->outPacker = ast_packer_new( member->smooth_multiple * member->smooth_size_out);
 	}
 
 	if (member->outPacker == NULL ){
+#endif
 		return __queue_outgoing_frame( member, fr, delivery ) ;
+#ifdef	PACKER
 	}
 	else
 	{
 		struct ast_frame *sfr;
 		int exitval = 0;
-//DEBUG("sending fr into outPacker, datalen=>%d, samples=>%d\n",fr->datalen, fr->samples) ;
+#ifdef	PACKER_DEBUG
+DEBUG("sending fr into outPacker, datalen=>%d, samples=>%d\n",fr->datalen, fr->samples) ;
+#endif
 		ast_packer_feed( member->outPacker , fr );
 		while( (sfr = ast_packer_read( member->outPacker ) ) )
 		{
-//DEBUG("read sfr from outPacker, datalen=>%d, samples=>%d\n",sfr->datalen, sfr->samples) ;
+#ifdef	PACKER_DEBUG
+DEBUG("read sfr from outPacker, datalen=>%d, samples=>%d\n",sfr->datalen, sfr->samples) ;
+#endif
 			if ( __queue_outgoing_frame( member, sfr, delivery ) == -1 ) {
 				exitval = -1;
 			}
@@ -2305,6 +2312,7 @@ int queue_outgoing_frame( struct ast_conf_member* member, const struct ast_frame
 
 		return exitval;
 	}
+#endif
 }
 
 //
@@ -2704,6 +2712,7 @@ int queue_outgoing_text_frame( struct ast_conf_member* member, const struct ast_
 }
 #endif
 
+#ifdef	PACKER
 //
 // ast_packer, adapted from ast_smoother
 // pack multiple frames together into one packet on the wire.
@@ -2868,6 +2877,7 @@ void ast_packer_free(struct ast_packer *s)
 {
 	free(s);
 }
+#endif
 
 int queue_frame_for_listener(
 	struct ast_conference* conf,
