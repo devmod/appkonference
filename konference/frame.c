@@ -40,10 +40,44 @@ conf_frame* mix_frames( conf_frame* frames_in, int speaker_count, int listener_c
 
 	if ( speaker_count > 1 )
 	{
-		if ( speaker_count == 2 && listener_count == 0 )
+		if ( speaker_count == 2 && listener_count == 0
+			&& frames_in->member->read_format == frames_in->next->member->read_format )
 		{
-			// optimize here also?
-			frames_out = mix_multiple_speakers( frames_in, speaker_count, listener_count, volume ) ;
+			struct ast_conf_member* mbr = NULL ;
+
+			mbr = frames_in->member ;
+			frames_in->member = frames_in->next->member ;
+			frames_in->next->member = mbr ;
+
+			if ( volume || frames_in->next->member->talk_volume || frames_in->member->listen_volume )
+			{
+				// convert frame to slinear; otherwise, drop both frames
+				if (!(frames_in->fr = convert_frame( frames_in->member->to_slinear, frames_in->fr)))
+				{
+					ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
+					return NULL ;
+				} 
+				else if ( volume || frames_in->next->member->talk_volume )
+				{
+					ast_frame_adjust_volume(frames_in->fr, frames_in->next->member->talk_volume + volume);
+				}
+			}
+
+			if ( volume || frames_in->member->talk_volume || frames_in->next->member->listen_volume )
+			{
+				// convert frame to slinear; otherwise, drop both frames
+				if (!(frames_in->next->fr = convert_frame( frames_in->next->member->to_slinear, frames_in->next->fr)))
+				{
+					ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
+					return NULL ;
+				}
+				else if ( volume || frames_in->member->talk_volume )
+				{
+					ast_frame_adjust_volume(frames_in->next->fr, frames_in->member->talk_volume + volume);
+				}
+			}
+
+			return frames_in ;
 		}
 		else
 		{
@@ -143,29 +177,6 @@ conf_frame* mix_single_speaker( conf_frame* frames_in, int volume, int membercou
 
 	return frames_in ;
 }
-
-// {
-	//
-	// a little optimization for testing only:
-	// when two speakers ( of the same type ) and no listeners
-	// are in a conference, we just swamp the frame's member pointers
-	//
-/*
-	if (
-		listeners == 0
-		&& speakers == 2
-		&& cf_spokenFrames->member->read_format == cf_spokenFrames->next->member->write_format
-		&& cf_spokenFrames->member->write_format == cf_spokenFrames->next->member->read_format
-	)
-	{
-		struct ast_conf_member* m = NULL ;
-		m = cf_spokenFrames->member ;
-		cf_spokenFrames->member = cf_spokenFrames->next->member ;
-		cf_spokenFrames->next->member = m ;
-		return cf_spokenFrames ;
-	}
-*/
-// }
 
 void set_conf_frame_delivery( conf_frame* frame, struct timeval time )
 {
