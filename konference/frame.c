@@ -33,71 +33,57 @@
 
 conf_frame* mix_frames( conf_frame* frames_in, int speaker_count, int listener_count, int volume, int membercount )
 {
-	if ( frames_in == NULL )
-		return NULL ;
-
-	conf_frame* frames_out = NULL ;
-
-	if ( speaker_count > 1 )
-	{
-		if ( speaker_count == 2 && listener_count == 0
-			&& frames_in->member->read_format == frames_in->next->member->read_format )
-		{
-			struct ast_conf_member* mbr = NULL ;
-
-			mbr = frames_in->member ;
-			frames_in->member = frames_in->next->member ;
-			frames_in->next->member = mbr ;
-
-			if ( volume || frames_in->next->member->talk_volume || frames_in->member->listen_volume )
-			{
-				// convert frame to slinear; otherwise, drop both frames
-				if (!(frames_in->fr = convert_frame( frames_in->member->to_slinear, frames_in->fr)))
-				{
-					ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
-					return NULL ;
-				} 
-				else if ( volume || frames_in->next->member->talk_volume )
-				{
-					ast_frame_adjust_volume(frames_in->fr, frames_in->next->member->talk_volume + volume);
-				}
-			}
-
-			if ( volume || frames_in->member->talk_volume || frames_in->next->member->listen_volume )
-			{
-				// convert frame to slinear; otherwise, drop both frames
-				if (!(frames_in->next->fr = convert_frame( frames_in->next->member->to_slinear, frames_in->next->fr)))
-				{
-					ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
-					return NULL ;
-				}
-				else if ( volume || frames_in->member->talk_volume )
-				{
-					ast_frame_adjust_volume(frames_in->next->fr, frames_in->member->talk_volume + volume);
-				}
-			}
-
-			return frames_in ;
-		}
-		else
-		{
-			// mix spoken frames for sending
-			// ( note: this call also releases us from free'ing spoken_frames )
-			frames_out = mix_multiple_speakers( frames_in, speaker_count, listener_count, volume ) ;
-		}
-	}
-	else if ( speaker_count == 1 )
+	if ( speaker_count == 1 )
 	{
 		// pass-through frames
-		frames_out = mix_single_speaker( frames_in, volume, membercount ) ;
+		return mix_single_speaker( frames_in, volume, membercount ) ;
 		//printf("mix single speaker\n");
 	}
-	else
+
+	if ( speaker_count == 2 && listener_count == 0
+		&& frames_in->member->read_format == frames_in->next->member->read_format )
 	{
-		// no frames to send, leave frames_out null
+		struct ast_conf_member* mbr = NULL ;
+
+		mbr = frames_in->member ;
+		frames_in->member = frames_in->next->member ;
+		frames_in->next->member = mbr ;
+
+		if ( volume || frames_in->next->member->talk_volume || frames_in->member->listen_volume )
+		{
+			// convert frame to slinear; otherwise, drop both frames
+			if (!(frames_in->fr = convert_frame( frames_in->member->to_slinear, frames_in->fr)))
+			{
+				ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
+				return NULL ;
+			} 
+			else if ( volume || frames_in->next->member->talk_volume )
+			{
+				ast_frame_adjust_volume(frames_in->fr, frames_in->next->member->talk_volume + volume);
+			}
+		}
+
+		if ( volume || frames_in->member->talk_volume || frames_in->next->member->listen_volume )
+		{
+			// convert frame to slinear; otherwise, drop both frames
+			if (!(frames_in->next->fr = convert_frame( frames_in->next->member->to_slinear, frames_in->next->fr)))
+			{
+				ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
+				return NULL ;
+			}
+			else if ( volume || frames_in->member->talk_volume )
+			{
+				ast_frame_adjust_volume(frames_in->next->fr, frames_in->member->talk_volume + volume);
+			}
+		}
+
+		return frames_in ;
 	}
 
-	return frames_out ;
+	// mix spoken frames for sending
+	// ( note: this call also releases us from free'ing spoken_frames )
+	return mix_multiple_speakers( frames_in, speaker_count, listener_count, volume ) ;
+
 }
 
 conf_frame* mix_single_speaker( conf_frame* frames_in, int volume, int membercount )

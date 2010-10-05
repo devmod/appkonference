@@ -180,7 +180,8 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 #endif
 	if ((f->frametype == AST_FRAME_VOICE
 			&& (member->mute_audio == 1
-				|| member->muted == 1)
+				|| member->muted == 1
+				|| conf->membercount == 1)
 			)
 #ifdef	VIDEO
 		|| (f->frametype == AST_FRAME_VIDEO

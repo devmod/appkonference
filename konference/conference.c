@@ -316,10 +316,7 @@ static void conference_exec( struct ast_conference *conf )
 			//---------------//
 
 			// mix frames and get batch of outgoing frames
-			send_frames = mix_frames( spoken_frames, speaker_count, listener_count, conf->volume, conf->membercount ) ;
-
-			// accounting: if there are frames, count them as one incoming frame
-			if ( send_frames != NULL )
+			if ( (send_frames = (spoken_frames ? mix_frames(spoken_frames, speaker_count, listener_count, conf->volume, conf->membercount) : NULL)) )
 			{
 				// set delivery timestamp
 				//set_conf_frame_delivery( send_frames, base ) ;
@@ -327,6 +324,7 @@ static void conference_exec( struct ast_conference *conf )
 
 				//DEBUG("base => %ld.%ld %d\n", base.tv_sec, base.tv_usec, ( int )( base.tv_usec / 1000 )) ;
 
+				// accounting: if there are frames, count them as one incoming frame
 				conf->stats.frames_in++ ;
 			}
 
