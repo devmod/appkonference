@@ -63,6 +63,26 @@
 #if (SILDET == 2)
 #include "libspeex/speex_preprocess.h"
 
+//
+// silence detection values
+//
+
+// toggle silence detection
+#define ENABLE_SILENCE_DETECTION 1
+
+// silence threshold
+#define AST_CONF_SILENCE_THRESHOLD 128
+
+// speech tail (delay before dropping silent frames, in ms.
+// #define AST_CONF_SPEECH_TAIL 180
+
+// number of frames to ignore speex_preprocess() after speech detected
+#define AST_CONF_SKIP_SPEEX_PREPROCESS 20
+
+// our speex probability values
+#define AST_CONF_PROB_START 0.05
+#define AST_CONF_PROB_CONTINUE 0.02
+
 // number of times the last non-silent frame should be
 // repeated after silence starts
 #define AST_CONF_CACHE_LAST_FRAME 1
@@ -196,27 +216,6 @@
 
 // number of milliseconds off AST_CONF_FRAME_INTERVAL before warning
 #define AST_CONF_INTERVAL_WARNING 1000
-
-//
-// silence detection values
-//
-
-// toggle silence detection
-#define ENABLE_SILENCE_DETECTION 1
-
-// silence threshold
-#define AST_CONF_SILENCE_THRESHOLD 128
-
-// speech tail (delay before dropping silent frames, in ms.
-// #define AST_CONF_SPEECH_TAIL 180
-
-// number of frames to ignore speex_preprocess() after speech detected
-#define AST_CONF_SKIP_SPEEX_PREPROCESS 20
-
-// our speex probability values
-#define AST_CONF_PROB_START 0.05
-#define AST_CONF_PROB_CONTINUE 0.02
-
 
 //
 // format translation values

@@ -106,11 +106,11 @@ struct ast_conf_member
 	// is this person a moderator?
 	int ismoderator;
 	int kick_conferees;
-
+#if ( SILDET == 2 )
 	// vad voice probability thresholds
 	float vad_prob_start ;
 	float vad_prob_continue ;
-
+#endif
 	// ready flag
 	short ready_for_outgoing ;
 

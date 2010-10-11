@@ -954,8 +954,10 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 	member->video_start_timeout = AST_CONF_VIDEO_START_TIMEOUT;
 	member->video_stop_timeout = AST_CONF_VIDEO_STOP_TIMEOUT;
 #endif
+#if ( SILDET == 2 )
 	member->vad_prob_start = AST_CONF_PROB_START;
 	member->vad_prob_continue = AST_CONF_PROB_CONTINUE;
+#endif
 	member->max_users = AST_CONF_MAX_USERS;
 
 	//
@@ -1000,8 +1002,10 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 	while ( (token = strsep(&stringp, argument_delimiter )) != NULL )
 	{
 		static const char arg_priority[] = "priority";
+#if ( SILDET == 2 )
 		static const char arg_vad_prob_start[] = "vad_prob_start";
 		static const char arg_vad_prob_continue[] = "vad_prob_continue";
+#endif
 #ifdef	VIDEO
 		static const char arg_video_start_timeout[] = "video_start_timeout";
 		static const char arg_video_stop_timeout[] = "video_stop_timeout";
@@ -1022,6 +1026,7 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 		{
 			member->priority = strtol(value, (char **)NULL, 10);
 			DEBUG("priority = %d\n", member->priority) ;
+#if ( SILDET == 2 )
 		} else if ( strncasecmp(key, arg_vad_prob_start, sizeof(arg_vad_prob_start) - 1) == 0 )
 		{
 			member->vad_prob_start = strtof(value, (char **)NULL);
@@ -1030,6 +1035,7 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 		{
 			member->vad_prob_continue = strtof(value, (char **)NULL);
 			DEBUG("vad_prob_continue = %f\n", member->vad_prob_continue) ;
+#endif
 #ifdef	VIDEO
 		} else if ( strncasecmp(key, arg_video_start_timeout, sizeof(arg_video_start_timeout) - 1) == 0 )
 		{
