@@ -39,6 +39,13 @@
 #include "common.h"
 
 //
+// defines
+//
+
+#define MEMBER_FLAGS_LEN 10
+#define MEMBER_TYPE_LEN 20
+
+//
 // struct declarations
 //
 
@@ -62,8 +69,8 @@ struct ast_conf_member
 
 	// values passed to create_member () via *data
 	int priority ;	// highest priority gets the channel
-	char* flags ;	// raw member-type flags
-	char *type ;		// conference type
+	char flags[MEMBER_FLAGS_LEN + 1] ;	// raw member-type flags
+	char type[MEMBER_TYPE_LEN + 1] ;		// conference type
 	char *spyee_channel_name ; // spyee  channel name
 	int max_users ; // zero or max users for this conference
 #if ( SILDET == 2 )
@@ -325,6 +332,10 @@ struct ast_conf_member* check_active_video( int id, struct ast_conference *conf 
 
 struct ast_conf_member* create_member( struct ast_channel* chan, const char* data, char* conf_name ) ;
 struct ast_conf_member* delete_member( struct ast_conf_member* member ) ;
+
+#ifdef	CACHE_CONTROL_BLOCKS
+void freembrblocks(void);
+#endif
 
 // incoming queue
 int queue_incoming_frame( struct ast_conf_member* member, struct ast_frame* fr ) ;

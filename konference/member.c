@@ -34,6 +34,11 @@
 
 #include "asterisk/musiconhold.h"
 
+#ifdef	CACHE_CONTROL_BLOCKS
+struct ast_conf_member *mbrblocklist = NULL;
+AST_MUTEX_DEFINE_STATIC(mbrblocklist_lock);
+#endif
+
 // process an incoming frame.  Returns 0 normally, 1 if hangup was received.
 static int process_incoming(struct ast_conf_member *member, struct ast_conference *conf, struct ast_frame *f)
 {
@@ -935,13 +940,29 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 	// allocate memory for new conference member
 	//
 #endif
-	struct ast_conf_member *member = calloc( 1,  sizeof( struct ast_conf_member ) ) ;
-
-	if ( member == NULL )
+	struct ast_conf_member *member;
+#ifdef	CACHE_CONTROL_BLOCKS
+	if ( mbrblocklist != NULL )
 	{
-		ast_log( LOG_ERROR, "unable to malloc ast_conf_member\n" ) ;
-		return NULL ;
+		// get member control block from the free list
+		ast_mutex_lock ( &mbrblocklist_lock ) ;
+		member = mbrblocklist;
+		mbrblocklist = mbrblocklist->next;
+		ast_mutex_unlock ( &mbrblocklist_lock ) ;
+		memset(member,0,sizeof(struct ast_conf_member));
 	}
+	else
+	{
+#endif
+		// allocate new member control block
+		if ( !(member = calloc( 1,  sizeof( struct ast_conf_member ) )) )
+		{
+			ast_log( LOG_ERROR, "unable to calloc ast_conf_member\n" ) ;
+			return NULL ;
+		}
+#ifdef	CACHE_CONTROL_BLOCKS
+	}
+#endif
 
 	// initialize mutex
 	ast_mutex_init( &member->lock ) ;
@@ -989,14 +1010,7 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 	// parse the flags
 	if ( ( token = strsep( &stringp, argument_delimiter ) ) != NULL )
 	{
-		member->flags = malloc( strlen( token ) + 1 ) ;
-		strcpy( member->flags, token ) ;
-	}
-	else
-	{
-		// make member->flags something
-		member->flags = malloc( sizeof( char ) ) ;
-		memset( member->flags, 0x0, sizeof( char ) ) ;
+		strncpy( member->flags, token, MEMBER_FLAGS_LEN ) ;
 	}
 
 	while ( (token = strsep(&stringp, argument_delimiter )) != NULL )
@@ -1052,8 +1066,7 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 			DEBUG("max_users = %d\n", member->max_users) ;
 		} else if ( strncasecmp(key, arg_conf_type, sizeof(arg_conf_type) - 1) == 0 )
 		{
-			member->type = malloc( strlen( value ) + 1 ) ;
-			strcpy( member->type, value ) ;
+			strncpy( member->type, value, MEMBER_TYPE_LEN ) ;
 			DEBUG("type = %s\n", member->type) ;
 		} else if ( strncasecmp(key, arg_chanspy, sizeof(arg_chanspy) - 1) == 0 )
 		{
@@ -1074,8 +1087,7 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 	member->chan = chan ;
 
 	// set default if no type parameter
-	if (!member->type) {
-		member->type = malloc( strlen( AST_CONF_TYPE_DEFAULT ) + 1 ) ;
+	if ( !(*(member->type)) ) {
 		strcpy( member->type, AST_CONF_TYPE_DEFAULT ) ;
 		DEBUG("type = %s\n", member->type) ;
 	}
@@ -1461,16 +1473,6 @@ struct ast_conf_member* delete_member( struct ast_conf_member* member )
 	if ( member->driven_member != NULL && member->speaking_state == 1 )
 		decrement_speaker_count(member->driven_member, 1);
 #endif
-	//
-	// clean up member flags
-	//
-
-	if ( member->flags != NULL )
-	{
-		// !!! DEBUGING !!!
-		DEBUG("freeing member flags\n") ;
-		free( member->flags ) ;
-	}
 
 	//
 	// delete the members frames
@@ -1548,9 +1550,6 @@ struct ast_conf_member* delete_member( struct ast_conf_member* member )
 	// member so we can return it
 	struct ast_conf_member* nm = member->next ;
 
-	// free the member's copy of the conference type
-	free(member->type);
-
 	// free the member's copy of the spyee channel name
 	free(member->spyee_channel_name);
 
@@ -1569,10 +1568,15 @@ struct ast_conf_member* delete_member( struct ast_conf_member* member )
 
 	// !!! DEBUGING !!!
 	DEBUG("freeing member control block\n") ;
-
+#ifdef	CACHE_CONTROL_BLOCKS
+	// put the member control block on the free list
+	ast_mutex_lock ( &mbrblocklist_lock ) ;
+	member->next = mbrblocklist;
+	mbrblocklist = member;
+	ast_mutex_unlock ( &mbrblocklist_lock ) ;
+#else
 	free( member ) ;
-	member = NULL ;
-
+#endif
 	return nm ;
 }
 
@@ -3423,5 +3427,18 @@ void stop_video(struct ast_conf_member *member)
 #endif
 	member->video_started = 0;
 
+}
+#endif
+
+#ifdef	CACHE_CONTROL_BLOCKS
+void freembrblocks( void )
+{
+	struct ast_conf_member *mbrblock;
+	while ( mbrblocklist != NULL )
+	{
+		mbrblock = mbrblocklist;
+		mbrblocklist = mbrblocklist->next;
+		free( mbrblock );
+	}
 }
 #endif

@@ -153,7 +153,7 @@ conference list command output so that a conference name can be correlated with
 its hash table entry.
 
 Changed preprocessor flag, APP_KONFERENCE_DEBUG, so that debug logging is
-enabled only if it's defined. To enable debug logging: edit the Makefile or
+enabled only if it's defined. To enable debug logging edit the Makefile or
 set it on the command line: make APP_KONFERENCE_DEBUG=1.
 
 Removed channel and conference name strings from the member control block. The
@@ -183,3 +183,7 @@ functions are available from the command line and via the AMI command action.
 Added a compiler flag for ifdef'ing out smoother debug logging, ifdef'ed the
 conference static frame indicator so that the check is now debug only, and
 fixed some of the debug messages.
+
+Added a compiler flag, CACHE_CONTROL_BLOCKS, for conference and member block
+reuse. To disable control block reuse edit the Makefile or clear it on the
+command line: make CACHE_CONTROL_BLOCKS=0.

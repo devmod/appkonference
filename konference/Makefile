@@ -27,6 +27,9 @@ REVISION = $(shell svnversion -n .)
 # turn app_konference debugging on or off ( 0 == OFF, 1 == ON )
 APP_KONFERENCE_DEBUG ?= 0
 
+# turn cache_control_blocks on or off ( 0 == OFF, 1 == ON )
+CACHE_CONTROL_BLOCKS ?= 1
+
 # channel table size default
 CHANNEL_TABLE_SIZE ?= 997
 
@@ -102,6 +105,10 @@ CPPFLAGS += -DONEMIXTHREAD
 
 ifeq ($(APP_KONFERENCE_DEBUG), 1)
 CPPFLAGS += -DAPP_KONFERENCE_DEBUG
+endif
+
+ifeq ($(CACHE_CONTROL_BLOCKS), 1)
+CPPFLAGS += -DCACHE_CONTROL_BLOCKS
 endif
 
 ifeq ($(REALTIME), 1)

@@ -43,6 +43,9 @@
 
 // single-linked list of current conferences
 struct ast_conference *conflist = NULL ;
+#ifdef	CACHE_CONTROL_BLOCKS
+struct ast_conference *confblocklist = NULL ;
+#endif
 
 // mutex for synchronizing access to conflist
 //static ast_mutex_t conflist_lock = AST_MUTEX_INITIALIZER ;
@@ -575,6 +578,29 @@ void init_conference( void )
 	argument_delimiter = ( !strcmp(PACKAGE_VERSION,"1.4") ? "|" : "," ) ;
 }
 
+#ifdef	CACHE_CONTROL_BLOCKS
+void freeconfblocks( void )
+{
+	struct ast_conference *confblock;
+	while ( confblocklist != NULL )
+	{
+		confblock = confblocklist;
+		confblocklist = confblocklist->next;
+		free( confblock );
+	}
+}
+#endif
+
+void dealloc_conference( void )
+{
+	free( channel_table ) ;
+	free( conference_table ) ;
+#ifdef	CACHE_CONTROL_BLOCKS
+	freeconfblocks();
+	freembrblocks();
+#endif
+}
+
 struct ast_conference* join_conference( struct ast_conf_member* member, char* conf_name, char* max_users_flag )
 {
 	struct ast_conference* conf = NULL ;
@@ -650,13 +676,27 @@ static struct ast_conference* create_conf( char* name, struct ast_conf_member* m
 	// allocate memory for conference
 	//
 
-	struct ast_conference *conf = malloc( sizeof( struct ast_conference ) ) ;
+	struct ast_conference *conf ;
 
-	if ( conf == NULL )
+#ifdef	CACHE_CONTROL_BLOCKS
+	if ( confblocklist != NULL )
 	{
-		ast_log( LOG_ERROR, "unable to malloc ast_conference\n" ) ;
-		return NULL ;
+		// get conference control block from the free list
+		conf = confblocklist;
+		confblocklist = confblocklist->next;
 	}
+	else
+	{
+#endif
+		// allocate new conference control block
+		if ( !(conf = malloc(sizeof(struct ast_conference))) )
+		{
+			ast_log( LOG_ERROR, "unable to malloc ast_conference\n" ) ;
+			return NULL ;
+		}
+#ifdef	CACHE_CONTROL_BLOCKS
+	}
+#endif
 
 	//
 	// initialize conference
@@ -850,10 +890,14 @@ struct ast_conference *remove_conf( struct ast_conference *conf )
 
 	if ( conf == conflist )
 		conflist = conf_temp ;
-
-	free( conf ) ;
-
-	// count new conference
+#ifdef	CACHE_CONTROL_BLOCKS
+	// put the conference control block on the free list
+	conf->next = confblocklist;
+	confblocklist = conf;
+#else
+	free( conf ) ;	
+#endif
+	// update conference count
 	--conference_count ;
 
 	return conf_temp ;

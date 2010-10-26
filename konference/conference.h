@@ -178,6 +178,11 @@ int send_text_message_to_member(struct ast_conf_member *member, const char *text
 
 // called by app_confernce.c:load_module()
 void init_conference( void ) ;
+void dealloc_conference( void ) ;
+
+#ifdef	CACHE_CONTROL_BLOCKS
+void freeconfblocks( void ) ;
+#endif
 
 int get_conference_count( void ) ;
 
