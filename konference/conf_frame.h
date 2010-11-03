@@ -67,6 +67,9 @@ typedef struct conf_frame
 #endif
 	// pointer to mixing buffer
 	char* mixed_buffer ;
+
+	// conference + speaker volume
+	int talk_volume ;
 } conf_frame ;
 
 

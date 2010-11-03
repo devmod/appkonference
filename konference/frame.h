@@ -69,7 +69,4 @@ void mix_slinear_frames( char* dst, const char* src, int samples ) ;
 conf_frame* get_silent_frame( void ) ;
 struct ast_frame* get_silent_slinear_frame( void ) ;
 
-// set delivery timestamp for frames
-void set_conf_frame_delivery( conf_frame* frame, struct timeval time ) ;
-
 #endif

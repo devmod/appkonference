@@ -2934,7 +2934,7 @@ int queue_frame_for_listener(
 		}
 #endif
 		// first, try for a pre-converted frame
-		qf = (member->listen_volume == 0 ? frame->converted[member->write_format_index] : 0);
+		qf = (!member->listen_volume && !frame->talk_volume ? frame->converted[member->write_format_index] : 0);
 
 		// convert ( and store ) the frame
 		if ( qf == NULL )
@@ -2958,9 +2958,12 @@ int queue_frame_for_listener(
 
 			// store the converted frame
 			// ( the frame will be free'd next time through the loop )
-			if (member->listen_volume == 0 && member->spy_partner == NULL)
+			if (member->listen_volume == 0)
 			{
+				if (frame->converted[ member->write_format_index ])
+					ast_frfree (frame->converted[ member->write_format_index ]);
 				frame->converted[ member->write_format_index ] = qf ;
+				frame->talk_volume = 0;
 			}
 		}
 
@@ -3052,10 +3055,7 @@ int queue_frame_for_speaker(
 		// convert and queue frame
 		//
 
-		// short-cut pointer to the ast_frame
-		qf = frame->fr ;
-
-		if ( (qf->subclass == member->write_format) && (member->listen_volume == 0) )
+		if ( (qf = frame->converted[member->write_format_index]) && !member->listen_volume && !frame->talk_volume )
 		{
 			// frame is already in correct format, so just queue it
 
@@ -3064,7 +3064,7 @@ int queue_frame_for_speaker(
 		else
 		{
 			// make a copy of the slinear version of the frame
-			qf = ast_frdup( qf ) ;
+			qf = ast_frdup( frame->fr ) ;
 
 			if (member->listen_volume != 0)
 			{

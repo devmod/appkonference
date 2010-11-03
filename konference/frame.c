@@ -40,42 +40,42 @@ conf_frame* mix_frames( conf_frame* frames_in, int speaker_count, int listener_c
 		//printf("mix single speaker\n");
 	}
 
-	if ( speaker_count == 2 && listener_count == 0
-		&& frames_in->member->read_format == frames_in->next->member->read_format )
+	if ( speaker_count == 2 && listener_count == 0 )
 	{
 		struct ast_conf_member* mbr = NULL ;
 
+		// copy orignal frame to converted array so speaker doesn't need to re-encode it
+		frames_in->converted[ frames_in->member->read_format_index ] = ast_frdup( frames_in->fr ) ;
+
+		// convert frame to slinear and adjust volume; otherwise, drop both frames
+		if (!(frames_in->fr = convert_frame( frames_in->member->to_slinear, frames_in->fr)))
+		{
+			ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
+			return NULL ;
+		} 
+		if ( (frames_in->talk_volume = volume + frames_in->member->talk_volume) )
+		{
+			ast_frame_adjust_volume(frames_in->fr, frames_in->talk_volume);
+		}
+
+		// copy orignal frame to converted array so speakers doesn't need to re-encode it
+		frames_in->next->converted[ frames_in->next->member->read_format_index ] = ast_frdup( frames_in->next->fr ) ;
+
+		// convert frame to slinear and adjust volume; otherwise, drop both frames
+		if (!(frames_in->next->fr = convert_frame( frames_in->next->member->to_slinear, frames_in->next->fr)))
+		{
+			ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
+			return NULL ;
+		}
+		if ( (frames_in->next->talk_volume = volume + frames_in->next->member->talk_volume) )
+		{
+			ast_frame_adjust_volume(frames_in->next->fr, frames_in->next->talk_volume);
+		}
+
+		// swap frame member pointers
 		mbr = frames_in->member ;
 		frames_in->member = frames_in->next->member ;
 		frames_in->next->member = mbr ;
-
-		if ( volume || frames_in->next->member->talk_volume || frames_in->member->listen_volume )
-		{
-			// convert frame to slinear; otherwise, drop both frames
-			if (!(frames_in->fr = convert_frame( frames_in->member->to_slinear, frames_in->fr)))
-			{
-				ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
-				return NULL ;
-			} 
-			else if ( volume || frames_in->next->member->talk_volume )
-			{
-				ast_frame_adjust_volume(frames_in->fr, frames_in->next->member->talk_volume + volume);
-			}
-		}
-
-		if ( volume || frames_in->member->talk_volume || frames_in->next->member->listen_volume )
-		{
-			// convert frame to slinear; otherwise, drop both frames
-			if (!(frames_in->next->fr = convert_frame( frames_in->next->member->to_slinear, frames_in->next->fr)))
-			{
-				ast_log( LOG_WARNING, "mix_frames: unable to convert frame to slinear\n" ) ;
-				return NULL ;
-			}
-			else if ( volume || frames_in->member->talk_volume )
-			{
-				ast_frame_adjust_volume(frames_in->next->fr, frames_in->member->talk_volume + volume);
-			}
-		}
 
 		return frames_in ;
 	}
@@ -128,9 +128,9 @@ conf_frame* mix_single_speaker( conf_frame* frames_in, int volume, int membercou
 		return NULL ;
 	}
 
-	if ( (frames_in->member->talk_volume != 0) || (volume != 0) )
+	if ( (frames_in->talk_volume = frames_in->member->talk_volume + volume) )
 	{
-		ast_frame_adjust_volume(frames_in->fr, frames_in->member->talk_volume + volume);
+		ast_frame_adjust_volume(frames_in->fr, frames_in->talk_volume);
 	}
 
 	if (!frames_in->member->spy_partner)
@@ -153,6 +153,10 @@ conf_frame* mix_single_speaker( conf_frame* frames_in, int volume, int membercou
 				spy_frame->prev = frames_in;
 
 				spy_frame->member = frames_in->member->spy_partner;
+				spy_frame->talk_volume = frames_in->talk_volume;
+
+				spy_frame->converted[ frames_in->member->read_format_index ]
+					= ast_frdup( frames_in->converted[ frames_in->member->read_format_index ] ) ;
 			}
 
 			frames_in->member = NULL ;
@@ -162,20 +166,6 @@ conf_frame* mix_single_speaker( conf_frame* frames_in, int volume, int membercou
 	}
 
 	return frames_in ;
-}
-
-void set_conf_frame_delivery( conf_frame* frame, struct timeval time )
-{
-	for ( ; frame != NULL ; frame = frame->next )
-	{
-		if ( frame->fr != NULL )
-		{
-			// copy passed timeval to frame's delivery timeval
-			frame->fr->delivery = time ;
-		}
-	}
-
-	return ;
 }
 
 conf_frame* mix_multiple_speakers(
@@ -496,6 +486,8 @@ conf_frame* create_conf_frame( struct ast_conf_member* member, conf_frame* next,
 
 	// this holds the temporu mix buffer
 	cf->mixed_buffer = NULL ;
+
+	cf->talk_volume = 0 ;
 
 	return cf ;
 }
