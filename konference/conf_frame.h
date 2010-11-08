@@ -61,10 +61,7 @@ typedef struct conf_frame
 	// linked-list pointers
 	struct conf_frame* next ;
 	struct conf_frame* prev ;
-#ifdef APP_KONFERENCE_DEBUG
-	// should this frame be preserved
-	short static_frame ;
-#endif
+
 	// pointer to mixing buffer
 	char* mixed_buffer ;
 

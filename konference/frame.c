@@ -413,13 +413,6 @@ conf_frame* delete_conf_frame( conf_frame* cf )
 		ast_log( LOG_ERROR, "unable to delete null conf frame\n") ;
 		return NULL ;
 	}
-
-	// check for frame marked as static
-	if ( cf->static_frame == 1 )
-	{
-		ast_log( LOG_ERROR, "unable to free static conf frame\n" ) ;
-		return NULL ;
-	}
 #endif
 	if ( cf->fr != NULL )
 	{
@@ -475,9 +468,7 @@ conf_frame* create_conf_frame( struct ast_conf_member* member, conf_frame* next,
 
 	cf->prev = NULL ;
 	cf->next = next ;
-#ifdef APP_KONFERENCE_DEBUG
-	cf->static_frame = 0 ;
-#endif
+
 	// establish relationship to 'next'
 	if ( next != NULL ) next->prev = cf ;
 
@@ -653,10 +644,6 @@ conf_frame* get_silent_frame( void )
 
 		// init the 'converted' slinear silent frame
 		static_silent_frame->converted[ AC_SLINEAR_INDEX ] = get_silent_slinear_frame() ;
-#ifdef APP_KONFERENCE_DEBUG
-		// mark frame as static so it's not deleted
-		static_silent_frame->static_frame = 1 ;
-#endif
 	}
 
 	return static_silent_frame ;
@@ -671,7 +658,7 @@ struct ast_frame* get_silent_slinear_frame( void )
 	{
 		char* data = malloc( AST_CONF_BUFFER_SIZE ) ;
 		memset( data, 0x0, AST_CONF_BUFFER_SIZE ) ;
-		f = create_slinear_frame( data ) ;
+		f = create_slinear_frame( data + AST_FRIENDLY_OFFSET ) ;
 	}
 
 	return f;

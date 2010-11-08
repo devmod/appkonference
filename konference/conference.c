@@ -564,14 +564,17 @@ void init_conference( void )
 	channel_table = malloc (CHANNEL_TABLE_SIZE * sizeof (struct channel_bucket) ) ;
 	for ( i = 0; i < CHANNEL_TABLE_SIZE; i++)
 		AST_LIST_HEAD_INIT (&channel_table[i]) ;
-	ast_log( LOG_NOTICE, "initializing channel table, size = %d\n", CHANNEL_TABLE_SIZE ) ;
+	ast_log( LOG_NOTICE, "initialized channel table, size = %d\n", CHANNEL_TABLE_SIZE ) ;
 
 	conference_table = malloc (CONFERENCE_TABLE_SIZE * sizeof (struct conference_bucket) ) ;
 	for ( i = 0; i < CONFERENCE_TABLE_SIZE; i++)
 		AST_LIST_HEAD_INIT (&conference_table[i]) ;
-	ast_log( LOG_NOTICE, "initializing conference table, size = %d\n", CONFERENCE_TABLE_SIZE ) ;
+	ast_log( LOG_NOTICE, "initialized conference table, size = %d\n", CONFERENCE_TABLE_SIZE ) ;
 
 	argument_delimiter = ( !strcmp(PACKAGE_VERSION,"1.4") ? "|" : "," ) ;
+
+	get_silent_frame() ;
+	ast_log( LOG_NOTICE, "allocated conference silent frame\n" ) ;
 }
 
 #ifdef	CACHE_CONTROL_BLOCKS
@@ -587,14 +590,28 @@ void freeconfblocks( void )
 }
 #endif
 
+// called by app_conference.c:unload_module()
 void dealloc_conference( void )
 {
+	int i;
+	for ( i = 0; i < CHANNEL_TABLE_SIZE; i++)
+		AST_LIST_HEAD_DESTROY (&channel_table[i]) ;
 	free( channel_table ) ;
+	ast_log( LOG_NOTICE, "destroyed channel table\n" ) ;
+
+	for ( i = 0; i < CONFERENCE_TABLE_SIZE; i++)
+		AST_LIST_HEAD_DESTROY (&conference_table[i]) ;
 	free( conference_table ) ;
+	ast_log( LOG_NOTICE, "destroyed conference table\n" ) ;
+
 #ifdef	CACHE_CONTROL_BLOCKS
 	freeconfblocks();
 	freembrblocks();
+	ast_log( LOG_NOTICE, "deallocated conference control blocks\n" ) ;
 #endif
+
+	delete_conf_frame( get_silent_frame() );
+	ast_log( LOG_NOTICE, "deallocated conference silent frame\n" ) ;
 }
 
 struct ast_conference* join_conference( struct ast_conf_member* member, char* conf_name, char* max_users_flag )
