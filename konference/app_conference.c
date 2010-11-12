@@ -37,7 +37,8 @@ static char *revision = REVISION;
 ASTERISK_FILE_VERSION(__FILE__, REVISION)
 
 #include "app_conference.h"
-#include "common.h"
+#include "conference.h"
+#include "cli.h"
 
 /*
  *
@@ -121,22 +122,6 @@ static int load_module( void )
 	res |= ast_register_application( app2, app_konferencecount_main, synopsis2, descrip2 ) ;
 
 	return res ;
-}
-
-// increment a timeval by ms milliseconds
-void add_milliseconds(struct timeval* tv, long ms)
-{
-	// add the microseconds to the microseconds field
-	tv->tv_usec += ( ms * 1000 ) ;
-
-	// calculate the number of seconds to increment
-	long s = ( tv->tv_usec / 1000000 ) ;
-
-	// adjust the microsends field
-	if ( s > 0 ) tv->tv_usec -= ( s * 1000000 ) ;
-
-	// increment the seconds field
-	tv->tv_sec += s ;
 }
 
 #define AST_MODULE "Konference"

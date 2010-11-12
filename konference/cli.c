@@ -30,6 +30,7 @@
 
 #include "asterisk/autoconfig.h"
 #include "cli.h"
+#include "conference.h"
 
 #ifdef AST_CLI_DEFINE
 

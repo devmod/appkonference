@@ -30,6 +30,7 @@
 
 #include "asterisk/autoconfig.h"
 #include "conference.h"
+#include "frame.h"
 #include "asterisk/utils.h"
 
 #include "asterisk/app.h"
@@ -58,6 +59,7 @@ static int conference_count = 0 ;
 static void do_VAD_switching(struct ast_conference *conf);
 static void do_video_switching(struct ast_conference *conf, int new_id, int lock);
 #endif
+static void add_milliseconds( struct timeval* tv, long ms ) ;
 static struct ast_conference* find_conf(const char* name);
 static struct ast_conference* create_conf(char* name, struct ast_conf_member* member);
 struct ast_conference* remove_conf(struct ast_conference* conf);
@@ -3325,4 +3327,20 @@ int count_exec( struct ast_channel* chan, void* data )
 		res = ast_say_number(chan, count, "", chan->language, (char *) NULL);
 	}
 	return res;
+}
+
+// increment a timeval by ms milliseconds
+void add_milliseconds(struct timeval* tv, long ms)
+{
+	// add the microseconds to the microseconds field
+	tv->tv_usec += ( ms * 1000 ) ;
+
+	// calculate the number of seconds to increment
+	long s = ( tv->tv_usec / 1000000 ) ;
+
+	// adjust the microsends field
+	if ( s > 0 ) tv->tv_usec -= ( s * 1000000 ) ;
+
+	// increment the seconds field
+	tv->tv_sec += s ;
 }

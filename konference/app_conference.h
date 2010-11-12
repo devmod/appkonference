@@ -28,8 +28,8 @@
  * 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _ASTERISK_CONF_H
-#define _ASTERISK_CONF_H
+#ifndef _KONFERENCE_APP_CONFERENCE_H
+#define _KONFERENCE_APP_CONFERENCE_H
 
 
 /* standard includes */
@@ -277,9 +277,15 @@
 
 #endif
 
-// utility functions
-void add_milliseconds( struct timeval* tv, long ms ) ;
+#define SETDATA2PTR(data,ptr) data = (typeof(data))((void*)ptr)
+#define CASTDATA2PTR(data, type) (type*)(*((long *)&(data)))
+
+const char *argument_delimiter ;
+
+AST_LIST_HEAD (conference_bucket, ast_conference) ;
+struct conference_bucket *conference_table ;
+
+AST_LIST_HEAD (channel_bucket, ast_conf_member) ;
+struct channel_bucket *channel_table ;
 
 #endif
-
-

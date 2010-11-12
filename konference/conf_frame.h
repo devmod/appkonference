@@ -28,15 +28,14 @@
  * 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _APP_CONF_STRUCTS_H
-#define _APP_CONF_STRUCTS_H
+#ifndef _KONFERENCE_CONF_FRAME_H
+#define _KONFERENCE_CONF_FRAME_H
 
 //
 // includes
 //
 
 #include "app_conference.h"
-#include "common.h"
 
 //
 // struct declarations

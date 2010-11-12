@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include "asterisk/autoconfig.h"
 #include "member.h"
+#include "frame.h"
 
 #include "asterisk/musiconhold.h"
 

@@ -28,15 +28,16 @@
  * 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _APP_CONF_CONFERENCE_H
-#define _APP_CONF_CONFERENCE_H
+#ifndef _KONFERENCE_CONFERENCE_H
+#define _KONFERENCE_CONFERENCE_H
 
 //
 // includes
 //
 
 #include "app_conference.h"
-#include "common.h"
+#include "conf_frame.h"
+#include "member.h"
 
 //
 // defines
@@ -47,12 +48,6 @@
 //
 // struct declarations
 //
-
-AST_LIST_HEAD (channel_bucket, ast_conf_member) ;
-struct channel_bucket *channel_table ;
-
-AST_LIST_HEAD (conference_bucket, ast_conference) ;
-struct conference_bucket *conference_table ;
 
 typedef struct ast_conference_stats
 {
@@ -76,7 +71,6 @@ typedef struct ast_conference_stats
 	struct timeval time_entered ;
 
 } ast_conference_stats ;
-
 
 struct ast_conference
 {
@@ -147,9 +141,6 @@ struct ast_conference
 	// flag indicating we should remove this member
 	char kick_flag ;
 } ;
-
-
-#include "member.h"
 
 //
 // function declarations
