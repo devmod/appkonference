@@ -166,15 +166,5 @@ distclean: clean
 $(TARGET): $(OBJS)
 	$(CC) -pg $(SOLINK) -o $@ $(OBJS)
 
-vad_test: vad_test.o libspeex/preprocess.o libspeex/misc.o libspeex/smallft.o
-	$(CC) $(PROFILE) -o $@ $^ -lm
-
 install:
 	$(INSTALL) -m 755 $(TARGET) $(INSTALL_MODULES_DIR)
-
-
-# config: all
-# 	cp conf.conf /etc/asterisk/
-
--include $(DEPS)
-

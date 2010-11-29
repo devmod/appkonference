@@ -1397,7 +1397,15 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 			member->smooth_size_out = 160;//samples
 			*/
 			break;
+#ifdef	AC_USE_SPEEX
 		case AST_FORMAT_SPEEX:
+			/* this assumptions are wrong
+			member->smooth_multiple = 2 ;  // for testing, force to dual frame
+			member->smooth_size_in  = 39;  // bytes
+			member->smooth_size_out = 160; // samples
+			*/
+			break;
+#endif
 #ifdef AC_USE_G729A
 		case AST_FORMAT_G729A:
 			/* this assumptions are wrong
