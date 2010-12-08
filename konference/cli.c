@@ -540,7 +540,7 @@ char *conference_mutechannel(struct ast_cli_entry *e, int cmd, struct ast_cli_ar
 	ast_mutex_unlock( &member->lock ) ;
 
 	manager_event(
-		EVENT_FLAG_CALL,
+		EVENT_FLAG_CONF,
 		"ConferenceMemberMute",
 		"Channel: %s\r\n",
 		channel
@@ -753,7 +753,7 @@ char *conference_unmutechannel(struct ast_cli_entry *e, int cmd, struct ast_cli_
 	ast_mutex_unlock( &member->lock ) ;
 
 	manager_event(
-		EVENT_FLAG_CALL,
+		EVENT_FLAG_CONF,
 		"ConferenceMemberUnmute",
 		"Channel: %s\r\n",
 		channel
@@ -1844,7 +1844,7 @@ void register_conference_cli( void )
 #endif
 #ifdef	MANAGER_COMMANDS
 	ast_manager_register( "KonferenceList", 0, manager_conference_list, "Conference List" );
-	ast_manager_register( "KonferenceEnd", EVENT_FLAG_CALL, manager_conference_end, "Terminate a conference" );
+	ast_manager_register( "KonferenceEnd", EVENT_FLAG_CONF, manager_conference_end, "Terminate a conference" );
 #endif
 }
 

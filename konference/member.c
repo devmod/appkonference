@@ -99,7 +99,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 		{
 			// output to manager...
 			manager_event(
-				EVENT_FLAG_CALL,
+				EVENT_FLAG_CONF,
 				"ConferenceDTMF",
 				"ConferenceName: %s\r\n"
 				"Type: %s\r\n"
@@ -238,7 +238,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 					// skip speex_preprocess(), and decrement counter
 					if (!--member->ignore_speex_count ) {
 						manager_event(
-							EVENT_FLAG_CALL,
+							EVENT_FLAG_CONF,
 							"ConferenceState",
 							"Channel: %s\r\n"
 							"Flags: %s\r\n"
@@ -259,7 +259,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 			{
 				if (!member->ignore_speex_count) {
 					manager_event(
-						EVENT_FLAG_CALL,
+						EVENT_FLAG_CONF,
 						"ConferenceState",
 						"Channel: %s\r\n"
 						"Flags: %s\r\n"
@@ -326,7 +326,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 		if ( strncmp(CASTDATA2PTR(f->data, char), AST_CONF_CONTROL_CAMERA_DISABLED, strlen(AST_CONF_CONTROL_CAMERA_DISABLED)) == 0 )
 		{
 			ast_mutex_lock(&member->lock);
-			manager_event(EVENT_FLAG_CALL,
+			manager_event(EVENT_FLAG_CONF,
 			              "ConferenceCameraDisabled",
 			              "ConferenceName: %s\r\nChannel: %s\r\n",
 			              conf->name,
@@ -336,7 +336,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 		} else if ( strncmp(CASTDATA2PTR(f->data, char), AST_CONF_CONTROL_CAMERA_ENABLED, strlen(AST_CONF_CONTROL_CAMERA_ENABLED)) == 0 )
 		{
 			ast_mutex_lock(&member->lock);
-			manager_event(EVENT_FLAG_CALL,
+			manager_event(EVENT_FLAG_CONF,
 			              "ConferenceCameraEnabled",
 			              "ConferenceName: %s\r\nChannel: %s\r\n",
 			              conf->name,
@@ -346,7 +346,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 		} else if ( strncmp(CASTDATA2PTR(f->data, char), AST_CONF_CONTROL_STOP_VIDEO_TRANSMIT, strlen(AST_CONF_CONTROL_STOP_VIDEO_TRANSMIT)) == 0 )
 		{
 			ast_mutex_lock(&member->lock);
-			manager_event(EVENT_FLAG_CALL,
+			manager_event(EVENT_FLAG_CONF,
 			              "ConferenceStopVideoTransmit",
 			              "ConferenceName: %s\r\nChannel: %s\r\n",
 			              conf->name,
@@ -356,7 +356,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 		} else if ( strncmp(CASTDATA2PTR(f->data, char), AST_CONF_CONTROL_START_VIDEO_TRANSMIT, strlen(AST_CONF_CONTROL_START_VIDEO_TRANSMIT)) == 0 )
 		{
 			ast_mutex_lock(&member->lock);
-			manager_event(EVENT_FLAG_CALL,
+			manager_event(EVENT_FLAG_CONF,
 			              "ConferenceStartVideoTransmit",
 			              "ConferenceName: %s\r\nChannel: %s\r\n",
 			              conf->name,
@@ -406,7 +406,7 @@ again2:
 		//ast_log( LOG_WARNING, "finished playing a sound: name = %s, stream = %p\n", toboot->name, toboot->stream);
 		// notify applications via mgr interface that this sound has been played
 		manager_event(
-			EVENT_FLAG_CALL,
+			EVENT_FLAG_CONF,
 			"ConferenceSoundComplete",
 			"Channel: %s\r\n"
 			"Sound: %s\r\n",
@@ -743,7 +743,7 @@ int member_exec( struct ast_channel* chan, void* data )
 	DEBUG("added %s to the channel table, bucket => %ld\n", member->chan->name, member->bucket - channel_table) ;
 
 	manager_event(
-		EVENT_FLAG_CALL,
+		EVENT_FLAG_CONF,
 		"ConferenceJoin",
 		"ConferenceName: %s\r\n"
 		"Type: %s\r\n"

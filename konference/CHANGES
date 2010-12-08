@@ -180,10 +180,12 @@ time when members are listed.
 Deprecated management commands KonferenceList and KonferenceEnd as similar
 functions are available from the command line and via the AMI command action.
 
-Added a compiler flag for ifdef'ing out smoother debug logging, ifdef'ed the
-conference static frame indicator so that the check is now debug only, and
-fixed some of the debug messages.
+Deprecated input smoothing and output packing because packet size is fixed at
+20 milliseconds so these functions are unnecessary.
 
 Added a compiler flag, CACHE_CONTROL_BLOCKS, for conference and member block
 reuse. To disable control block reuse edit the Makefile or clear it on the
 command line: make CACHE_CONTROL_BLOCKS=0.
+
+Changed the conference event privilege to user to reduce the number of events
+an application has to monitor to support a conference.

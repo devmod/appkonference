@@ -1235,7 +1235,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 				if ( conf->video_locked )
 				{
 					conf->video_locked = 0;
-					manager_event(EVENT_FLAG_CALL, "ConferenceUnlock", "ConferenceName: %s\r\n", conf->name);
+					manager_event(EVENT_FLAG_CONF, "ConferenceUnlock", "ConferenceName: %s\r\n", conf->name);
 				}
 				do_video_switching(conf, conf->default_video_source_id, 0);
 			} else if ( conf->default_video_source_id == member->id )
@@ -1246,7 +1246,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 			// If the member is broadcasting, we notify that it is no longer the case
 			if ( member->video_broadcast_active )
 			{
-				manager_event(EVENT_FLAG_CALL,
+				manager_event(EVENT_FLAG_CONF,
 					"ConferenceVideoBroadcastOff",
 					"ConferenceName: %s\r\nChannel: %s\r\n",
 					conf->name,
@@ -1283,7 +1283,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 
 	// output to manager...
 	manager_event(
-		EVENT_FLAG_CALL,
+		EVENT_FLAG_CONF,
 		"ConferenceLeave",
 		"ConferenceName: %s\r\n"
 		"Type:  %s\r\n"
@@ -1707,7 +1707,7 @@ int mute_member (  const char* confname, int user_id)
 				      member->mute_audio = 1;
 				      ast_mutex_unlock( &member->lock ) ;
 					manager_event(
-						EVENT_FLAG_CALL,
+						EVENT_FLAG_CONF,
 						"ConferenceMemberMute",
 						"Channel: %s\r\n",
 						member->chan->name
@@ -1776,7 +1776,7 @@ int mute_conference (  const char* confname)
 	ast_mutex_unlock( &conflist_lock ) ;
 
 	manager_event(
-		EVENT_FLAG_CALL,
+		EVENT_FLAG_CONF,
 		"ConferenceMute",
 		"ConferenceName: %s\r\n",
 		confname
@@ -1818,7 +1818,7 @@ int unmute_member (  const char* confname, int user_id)
 				      member->mute_audio = 0;
 				      ast_mutex_unlock( &member->lock ) ;
 					manager_event(
-						EVENT_FLAG_CALL,
+						EVENT_FLAG_CONF,
 						"ConferenceMemberUnmute",
 						"Channel: %s\r\n",
 						member->chan->name
@@ -1887,7 +1887,7 @@ int unmute_conference (  const char* confname)
 	ast_mutex_unlock( &conflist_lock ) ;
 
 	manager_event(
-		EVENT_FLAG_CALL,
+		EVENT_FLAG_CONF,
 		"ConferenceUnmute",
 		"ConferenceName: %s\r\n",
 		confname
@@ -2252,7 +2252,7 @@ int lock_conference(const char *conference, int member_id)
 					conf->video_locked = 1;
 					res = 1;
 
-					manager_event(EVENT_FLAG_CALL, "ConferenceLock", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
+					manager_event(EVENT_FLAG_CONF, "ConferenceLock", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
 					break;
 				}
 			}
@@ -2299,7 +2299,7 @@ int lock_conference_channel(const char *conference, const char *channel)
 					conf->video_locked = 1;
 					res = 1;
 
-					manager_event(EVENT_FLAG_CALL, "ConferenceLock", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
+					manager_event(EVENT_FLAG_CONF, "ConferenceLock", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
 					break;
 				}
 			}
@@ -2334,7 +2334,7 @@ int unlock_conference(const char *conference)
 		if ( strcmp(conference, conf->name) == 0 )
 		{
 			conf->video_locked = 0;
-			manager_event(EVENT_FLAG_CALL, "ConferenceUnlock", "ConferenceName: %s\r\n", conf->name);
+			manager_event(EVENT_FLAG_CONF, "ConferenceUnlock", "ConferenceName: %s\r\n", conf->name);
 			do_video_switching(conf, conf->default_video_source_id, 0);
 			res = 1;
 
@@ -2369,7 +2369,7 @@ int set_default_id(const char *conference, int member_id)
 			if ( member_id < 0 )
 			{
 				conf->default_video_source_id = -1;
-				manager_event(EVENT_FLAG_CALL, "ConferenceDefault", "ConferenceName: %s\r\nChannel: empty\r\n", conf->name);
+				manager_event(EVENT_FLAG_CONF, "ConferenceDefault", "ConferenceName: %s\r\nChannel: empty\r\n", conf->name);
 				res = 1;
 				break;
 			} else
@@ -2390,7 +2390,7 @@ int set_default_id(const char *conference, int member_id)
 						conf->default_video_source_id = member_id;
 						res = 1;
 
-						manager_event(EVENT_FLAG_CALL, "ConferenceDefault", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
+						manager_event(EVENT_FLAG_CONF, "ConferenceDefault", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
 						break;
 					}
 				}
@@ -2443,7 +2443,7 @@ int set_default_channel(const char *conference, const char *channel)
 					conf->default_video_source_id = member->id;
 					res = 1;
 
-					manager_event(EVENT_FLAG_CALL, "ConferenceDefault", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
+					manager_event(EVENT_FLAG_CONF, "ConferenceDefault", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
 					break;
 				}
 			}
@@ -2493,7 +2493,7 @@ int video_mute_member(const char *conference, int member_id)
 					// release member mutex
 					ast_mutex_unlock( &member->lock );
 
-					manager_event(EVENT_FLAG_CALL, "ConferenceVideoMute", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
+					manager_event(EVENT_FLAG_CONF, "ConferenceVideoMute", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
 
 					if ( member->id == conf->current_video_source_id )
 					{
@@ -2551,7 +2551,7 @@ int video_unmute_member(const char *conference, int member_id)
 					// release member mutex
 					ast_mutex_unlock( &member->lock );
 
-					manager_event(EVENT_FLAG_CALL, "ConferenceVideoUnmute", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
+					manager_event(EVENT_FLAG_CONF, "ConferenceVideoUnmute", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
 
 					res = 1;
 					break;
@@ -2604,7 +2604,7 @@ int video_mute_channel(const char *conference, const char *channel)
 					// release member mutex
 					ast_mutex_unlock( &member->lock );
 
-					manager_event(EVENT_FLAG_CALL, "ConferenceVideoMute", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
+					manager_event(EVENT_FLAG_CONF, "ConferenceVideoMute", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
 
 					if ( member->id == conf->current_video_source_id )
 					{
@@ -2662,7 +2662,7 @@ int video_unmute_channel(const char *conference, const char *channel)
 					// release member mutex
 					ast_mutex_unlock( &member->lock );
 
-					manager_event(EVENT_FLAG_CALL, "ConferenceVideoUnmute", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
+					manager_event(EVENT_FLAG_CONF, "ConferenceVideoUnmute", "ConferenceName: %s\r\nChannel: %s\r\n", conf->name, member->chan->name);
 
 					res = 1;
 					break;
@@ -3022,7 +3022,7 @@ static void do_video_switching(struct ast_conference *conf, int new_id, int lock
 			}
 		}
 
-		manager_event(EVENT_FLAG_CALL,
+		manager_event(EVENT_FLAG_CONF,
 			"ConferenceVideoSwitch",
 			"ConferenceName: %s\r\nChannel: %s\r\n",
 			conf->name,
@@ -3246,7 +3246,7 @@ static int update_member_broadcasting(struct ast_conference *conf, struct ast_co
 	   )
 	{
 		member->video_broadcast_active = 0;
-		manager_event(EVENT_FLAG_CALL,
+		manager_event(EVENT_FLAG_CONF,
 				"ConferenceVideoBroadcastOff",
 				"ConferenceName: %s\r\nChannel: %s\r\n",
 				conf->name,
@@ -3258,7 +3258,7 @@ static int update_member_broadcasting(struct ast_conference *conf, struct ast_co
 		if ( !member->video_broadcast_active )
 		{
 			member->video_broadcast_active = 1;
-			manager_event(EVENT_FLAG_CALL,
+			manager_event(EVENT_FLAG_CONF,
 				"ConferenceVideoBroadcastOn",
 				"ConferenceName: %s\r\nChannel: %s\r\n",
 				conf->name,

@@ -277,6 +277,8 @@
 
 #endif
 
+#define EVENT_FLAG_CONF EVENT_FLAG_USER
+
 #define SETDATA2PTR(data,ptr) data = (typeof(data))((void*)ptr)
 #define CASTDATA2PTR(data, type) (type*)(*((long *)&(data)))
 
