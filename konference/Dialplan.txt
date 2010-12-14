@@ -37,7 +37,7 @@ exten => <ext>,<pri>,Konference(<confname>,<flags>,<optional args>,<more optiona
 	Miscellaneous:
 	't' : member accepts text based control messages.  The messages are described in a separate document
 	'N' : Assume that the member starts off with camera disabled.
-	'x' : when the last moderator leaves, all conferees are kicked and conference ends.
+	'x' : [Restored previous behavior- One mod leaves, kick all]
 	'a' : V + T
 	'H' : play music on hold if only one member in conference
 
