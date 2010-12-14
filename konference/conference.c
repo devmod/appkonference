@@ -1270,7 +1270,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 #endif
 	ast_rwlock_unlock( &conf->lock );
 
-	DEBUG("removed member from conference %s, remaining members => %d\n", conf_name, membercount) ;
+	DEBUG("removed member from conference %s, remaining members => %d\n", conf->name, membercount) ;
 
 	// remove member from channel table
 	if ( member->bucket != NULL )
@@ -1278,7 +1278,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 		AST_LIST_LOCK (member->bucket ) ;
 		AST_LIST_REMOVE (member->bucket, member, hash_entry) ;
 		AST_LIST_UNLOCK (member->bucket ) ;
-		DEBUG("removed %s from the channel table, bucket => %ld\n", member->chan->name, member->bucket - channel_table) ;
+		DEBUG("removed %s from the channel table, bucket => %d\n", member->chan->name, member->bucket - channel_table) ;
 	}
 
 	// output to manager...
@@ -1302,8 +1302,9 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 		member->id,
 		member->flags,
 		member->chan->name,
-		member->chan->cid.cid_num ? member->chan->cid.cid_num : "unknown",
-		member->chan->cid.cid_name ? member->chan->cid.cid_name: "unknown",
+		member->chan->caller.id.number.str ? member->chan->caller.id.number.str : "unknown",
+		member->chan->caller.id.name.str ? member->chan->caller.id.name.str: "unknown",
+
 		tt,
 		moderators,
 		membercount
@@ -1526,8 +1527,9 @@ int manager_conference_list( struct mansession *s, const struct message *m )
 						conf->name,
 						member->id,
 						member->chan->name,
-						member->chan->cid.cid_num ? member->chan->cid.cid_num : "unknown",
-						member->chan->cid.cid_name ? member->chan->cid.cid_name : "unknown",
+						member->chan->caller.id.number.str ? member->chan->caller.id.number.str : "unknown",
+						member->chan->caller.id.name.str ? member->chan->caller.id.name.str : "unknown",
+
 						member->mute_audio ? "YES" : "NO",
 #ifdef	VIDEO
 						member->mute_video ? "YES" : "NO",
@@ -2138,10 +2140,11 @@ static void do_VAD_switching(struct ast_conference *conf)
 	      member != NULL ;
 	      member = member->next )
 	{
+#if ( SILDET == 2 )
 		// If a member connects via telephone, they don't have video
 		if ( member->via_telephone )
 			continue;
-
+#endif
 		// We check for no VAD switching, video-muted or camera disabled
 		// If yes, this member will not be considered as a candidate for switching
 		// If this is the currently speaking member, then mark it so we force a switch

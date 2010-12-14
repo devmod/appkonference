@@ -57,7 +57,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 		if (member->dtmf_switch)
 		{
 			ast_mutex_lock( &member->lock ) ;
-			switch (f->subclass) {
+			switch (f->subclass.integer) {
 			case '0' :member->req_id=0;
 				break;
 			case '1' :member->req_id=1;
@@ -115,9 +115,10 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 				member->type,
 				member->chan->uniqueid,
 				member->chan->name,
-				member->chan->cid.cid_num ? member->chan->cid.cid_num : "unknown",
-				member->chan->cid.cid_name ? member->chan->cid.cid_name : "unknown",
-				f->subclass,
+				member->chan->caller.id.number.str ? member->chan->caller.id.number.str : "unknown",
+				member->chan->caller.id.name.str ? member->chan->caller.id.name.str : "unknown",
+				f->subclass.integer,
+
 				conf->membercount,
 				member->flags,
 				member->mute_audio
@@ -214,9 +215,9 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 		if (
 			member->dsp != NULL
 #ifndef	AC_USE_G722
-			&& f->subclass == AST_FORMAT_SLINEAR
+			&& f->subclass.integer == AST_FORMAT_SLINEAR
 #else
-			&& f->subclass == AST_FORMAT_SLINEAR16
+			&& f->subclass.integer == AST_FORMAT_SLINEAR16
 #endif
 			&& f->datalen == AST_CONF_FRAME_DATA_SIZE
 			)
@@ -240,9 +241,11 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 						manager_event(
 							EVENT_FLAG_CONF,
 							"ConferenceState",
+							"ConferenceName: %s\r\n",
 							"Channel: %s\r\n"
 							"Flags: %s\r\n"
 							"State: %s\r\n",
+							conf->name,
 							member->chan->name,
 							member->flags,
 							"silent"
@@ -261,9 +264,11 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 					manager_event(
 						EVENT_FLAG_CONF,
 						"ConferenceState",
+						"ConferenceName: %s\r\n",
 						"Channel: %s\r\n"
 						"Flags: %s\r\n"
 						"State: %s\r\n",
+						conf->name,
 						member->chan->name,
 						member->flags,
 						"speaking"
@@ -292,7 +297,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 #endif
 	else if (
 		f->frametype == AST_FRAME_CONTROL
-		&& f->subclass == AST_CONTROL_HANGUP
+		&& f->subclass.integer == AST_CONTROL_HANGUP
 		)
 	{
 		// hangup received
@@ -306,7 +311,7 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 #ifdef	VIDEO
 	else if (
 		f->frametype == AST_FRAME_CONTROL
-		&& f->subclass == AST_CONTROL_VIDUPDATE
+		&& f->subclass.integer == AST_CONTROL_VIDUPDATE
 		)
 	{
 		// say we have switched to cause a FIR to
@@ -761,8 +766,8 @@ int member_exec( struct ast_channel* chan, void* data )
 		member->id,
 		member->flags,
 		member->chan->name,
-		member->chan->cid.cid_num ? member->chan->cid.cid_num : "unknown",
-		member->chan->cid.cid_name ? member->chan->cid.cid_name: "unknown",
+		member->chan->caller.id.number.str ? member->chan->caller.id.number.str : "unknown",
+		member->chan->caller.id.name.str ? member->chan->caller.id.name.str : "unknown",
 		conf->stats.moderators,
 		conf->membercount
 	) ;
@@ -2150,7 +2155,7 @@ DEBUG("SMOOTH:Feeding frame into inSmoother, timestamp => %ld.%ld\n", fr->delive
 		while( ( sfr = ast_smoother_read( member->inSmoother ) ) ){
 #ifdef  SMOOTHER_DEBUG
 			++i;
-DEBUG("\treading new frame [%d] from smoother, inFramesCount[%d], \n\tsfr->frametype -> %d , sfr->subclass -> %d , sfr->datalen => %d sfr->samples => %d\n", i , member->inFramesCount , sfr->frametype, sfr->subclass, sfr->datalen, sfr->samples) ;
+DEBUG("\treading new frame [%d] from smoother, inFramesCount[%d], \n\tsfr->frametype -> %d , sfr->subclass.integer -> %d , sfr->datalen => %d sfr->samples => %d\n", i , member->inFramesCount , sfr->frametype, sfr->subclass.integer, sfr->datalen, sfr->samples) ;
 DEBUG("SMOOTH:Reading frame from inSmoother, i=>%d, timestamp => %ld.%ld\n",i, sfr->delivery.tv_sec, sfr->delivery.tv_usec);
 #endif
 			conf_frame* cfr = create_conf_frame( member, member->inFrames, sfr ) ;
@@ -2797,10 +2802,10 @@ int ast_packer_feed(struct ast_packer *s, const struct ast_frame *f)
 		return -1;
 	}
 	if (!s->format) {
-		s->format = f->subclass;
+		s->format = f->subclass.integer;
 		s->samples=0;
-	} else if (s->format != f->subclass) {
-		ast_log(LOG_WARNING, "Packer was working on %d format frames, now trying to feed %d?\n", s->format, f->subclass);
+	} else if (s->format != f->subclass.integer) {
+		ast_log(LOG_WARNING, "Packer was working on %d format frames, now trying to feed %d?\n", s->format, f->subclass.integer);
 		return -1;
 	}
 	if (s->len + f->datalen > PACKER_SIZE) {
@@ -2849,7 +2854,7 @@ struct ast_frame *ast_packer_read(struct ast_packer *s)
 		len = s->len;
 	/* Make frame */
 	s->f.frametype = AST_FRAME_VOICE;
-	s->f.subclass = s->format;
+	s->f.subclass.integer = s->format;
 	SETDATA2PTR(s->f.data, s->framedata + AST_FRIENDLY_OFFSET);
 	s->f.offset = AST_FRIENDLY_OFFSET;
 	s->f.datalen = len;
@@ -3066,7 +3071,7 @@ int queue_frame_for_speaker(
 
 		if ( (qf = frame->converted[member->write_format_index]) && !member->listen_volume && !frame->talk_volume )
 		{
-			// frame is already in correct format, so just queue it
+			// frame is alread:y in correct format, so just queue it
 
 			queue_outgoing_frame( member, qf, conf->delivery_time ) ;
 		}
@@ -3413,7 +3418,12 @@ int is_video_eligible(struct ast_conf_member *member)
 	if ( member == NULL )
 		return 0;
 	
+#if ( SILDET == 2 )
 	return !member->no_camera && !member->mute_video && !member->via_telephone;
+#else
+	return !member->no_camera && !member->mute_video;
+#endif
+
 }
 
 // Member start and stop video methods
