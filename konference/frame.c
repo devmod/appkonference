@@ -573,9 +573,9 @@ struct ast_frame* create_slinear_frame( char* data )
 
 	f->frametype = AST_FRAME_VOICE ;
 #ifndef	AC_USE_G722
-	f->subclass.integer = AST_FORMAT_SLINEAR ;
+	f->subclass = AST_FORMAT_SLINEAR ;
 #else
-	f->subclass.integer = AST_FORMAT_SLINEAR16 ;
+	f->subclass = AST_FORMAT_SLINEAR16 ;
 #endif
 	f->samples = AST_CONF_BLOCK_SAMPLES ;
 	f->offset = AST_FRIENDLY_OFFSET ;
