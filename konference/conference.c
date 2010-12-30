@@ -1,5 +1,4 @@
-
-// $Id: conference.c 886 2007-08-06 14:33:34Z bcholew $
+Id: conference.c 886 2007-08-06 14:33:34Z bcholew $
 
 /*
  * app_conference
@@ -1145,7 +1144,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 
 	ast_rwlock_wrlock( &conf->lock );
 
-	if ( member->ismoderator && member->kick_conferees )
+	if ( member->ismoderator && member->kick_conferees && conf->stats.moderators == 1 )
 		conf->kick_flag = 1 ;
 
 #ifdef	VIDEO
