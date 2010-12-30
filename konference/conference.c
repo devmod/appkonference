@@ -1144,7 +1144,7 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 
 	ast_rwlock_wrlock( &conf->lock );
 
-	if ( member->ismoderator && member->kick_conferees && conf->stats.moderators == 1 )
+	if ( member->ismoderator && member->kick_conferees )
 		conf->kick_flag = 1 ;
 
 #ifdef	VIDEO
