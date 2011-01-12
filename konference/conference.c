@@ -346,18 +346,22 @@ static void conference_exec( struct ast_conference *conf )
 
 			curr = ast_tvnow();
 			
-      if ( conf->does_custom_video && 0)
+      if ( conf->does_custom_video )
 			{
-				struct ast_conf_member *m1, *m2;
+				struct ast_conf_member *m1 = NULL, *m2 = NULL;
 
 				m1 = conf->memberlist;
-				m2 = conf->memberlist->next;
-					
-				start_video(m1);
-				if ( m2 != NULL )
+        while(m1 && !m1->does_custom_video)
+          m1=m1->next;
+        m2 = (m1 ? m1->next : NULL);
+        while(m2 && !m2->does_custom_video)
+	        m2=m2->next;
+        if(m1)
+  				start_video(m1);
+				if (m2)
 					start_video(m2);
-				
-				if ( conf->membercount == 1 )
+
+				if ( m1 && !m2 )
 				{
 					cfr = get_incoming_video_frame(m1);
 					update_member_broadcasting(conf, m1, cfr, curr);
@@ -367,7 +371,7 @@ static void conference_exec( struct ast_conference *conf )
 						delete_conf_frame(cfr);
 						cfr = get_incoming_video_frame(m1);
 					}
-				} else if ( conf->membercount == 2 )
+				} else if ( m1 && m2 )
 				{
 					cfr = get_incoming_video_frame(m1);
 					update_member_broadcasting(conf, m1, cfr, curr);
