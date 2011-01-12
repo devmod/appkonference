@@ -1147,9 +1147,13 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 		{
 			// allowed flags are C, c, L, l, V, D, A, C, X, R, T, t, M, S, z, o, F, H
 			// mute/no_recv options
+      //Streamoso flags : K
 			switch ( flags[i] )
 			{
 #ifdef	VIDEO
+      case 'K':
+        member->does_custom_video = 1;
+        break;
 			case 'C':
 				member->mute_video = 1;
 				break ;

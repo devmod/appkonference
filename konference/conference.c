@@ -346,10 +346,52 @@ static void conference_exec( struct ast_conference *conf )
 
 			curr = ast_tvnow();
 			
+      if ( conf->does_custom_video && 0)
+			{
+				struct ast_conf_member *m1, *m2;
+
+				m1 = conf->memberlist;
+				m2 = conf->memberlist->next;
+					
+				start_video(m1);
+				if ( m2 != NULL )
+					start_video(m2);
+				
+				if ( conf->membercount == 1 )
+				{
+					cfr = get_incoming_video_frame(m1);
+					update_member_broadcasting(conf, m1, cfr, curr);
+					while ( cfr )
+					{
+						queue_outgoing_video_frame(m1, cfr->fr, conf->delivery_time);
+						delete_conf_frame(cfr);
+						cfr = get_incoming_video_frame(m1);
+					}
+				} else if ( conf->membercount == 2 )
+				{
+					cfr = get_incoming_video_frame(m1);
+					update_member_broadcasting(conf, m1, cfr, curr);
+					while ( cfr )
+					{
+						queue_outgoing_video_frame(m2, cfr->fr, conf->delivery_time);
+						delete_conf_frame(cfr);
+						cfr = get_incoming_video_frame(m1);
+					}
+
+					cfr = get_incoming_video_frame(m2);
+					update_member_broadcasting(conf, m2, cfr, curr);
+					while ( cfr )
+					{
+						queue_outgoing_video_frame(m1, cfr->fr, conf->delivery_time);
+						delete_conf_frame(cfr);
+						cfr = get_incoming_video_frame(m2);
+					}
+				}
+			} 
 			// Chat mode handling
 			// If there's only one member, then video gets reflected back to it
 			// If there are two members, then each sees the other's video
-			if ( conf->does_chat_mode &&
+			else if ( conf->does_chat_mode &&
 			     conf->membercount > 0 &&
 			     conf->membercount <= 2
 			   )
@@ -517,7 +559,7 @@ static void conference_exec( struct ast_conference *conf )
 			if ( ( ast_tvdiff_ms(curr, notify) / AST_CONF_NOTIFICATION_SLEEP ) >= 1 )
 			{
 				// Do VAD switching logic
-				if ( !conf->video_locked )
+				if ( !conf->video_locked && !conf->does_custom_video)
 					do_VAD_switching(conf);
 				// increment the notification timer base
 				add_milliseconds( &notify, AST_CONF_NOTIFICATION_SLEEP ) ;
@@ -738,6 +780,7 @@ static struct ast_conference* create_conf( char* name, struct ast_conf_member* m
 
 	conf->chat_mode_on = 0;
 	conf->does_chat_mode = 0;
+  conf->does_custom_video = 0;
 #endif
 	// zero stats
 	memset(	&conf->stats, 0x0, sizeof( ast_conference_stats ) ) ;
@@ -1054,6 +1097,12 @@ static void add_member( struct ast_conf_member *member, struct ast_conference *c
 			othermember = othermember->next;
 		}
 	}
+
+  //The conf is set to custom_video if the member supports it
+  if(member->does_custom_video) {
+    conf->does_custom_video = 1;
+    start_video(member);
+  }  
 
 	// The conference sets chat mode according to the latest member chat flag
 	conf->does_chat_mode = member->does_chat_mode;
@@ -2216,7 +2265,6 @@ static void do_VAD_switching(struct ast_conference *conf)
 		else
 			// No default, switch to empty (-1)
 			new_id = -1;
-
 		do_video_switching(conf, new_id, 0);
 	}
 }
@@ -2990,6 +3038,7 @@ int drive_channel(const char *conference, const char *src_channel, const char *d
 // The function locks the conference mutex as required
 static void do_video_switching(struct ast_conference *conf, int new_id, int lock)
 {
+  ast_log( LOG_ERROR, "HACK3 $$$$$$$$$$$ do_video_switching\n");
 	if ( conf == NULL ) return;
 
 	if ( lock )
