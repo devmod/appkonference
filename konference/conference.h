@@ -132,6 +132,8 @@ struct ast_conference
 	short does_chat_mode;
   //Streamoso custom video mode
   short does_custom_video;
+  //Streamoso fix for vid switching
+  short vad_switch;
 	// chat mode is on;
 	short chat_mode_on;
 #endif	

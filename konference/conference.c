@@ -563,7 +563,7 @@ static void conference_exec( struct ast_conference *conf )
 			if ( ( ast_tvdiff_ms(curr, notify) / AST_CONF_NOTIFICATION_SLEEP ) >= 1 )
 			{
 				// Do VAD switching logic
-				if ( !conf->video_locked && !conf->does_custom_video)
+				if ( !conf->video_locked && !conf->does_custom_video && conf->vad_switch)
 					do_VAD_switching(conf);
 				// increment the notification timer base
 				add_milliseconds( &notify, AST_CONF_NOTIFICATION_SLEEP ) ;
@@ -1107,6 +1107,10 @@ static void add_member( struct ast_conf_member *member, struct ast_conference *c
     conf->does_custom_video = 1;
     start_video(member);
   }  
+
+  if(member->vad_switch) {
+    conf->vad_switch = 1;
+  }
 
 	// The conference sets chat mode according to the latest member chat flag
 	conf->does_chat_mode = member->does_chat_mode;
@@ -3042,7 +3046,6 @@ int drive_channel(const char *conference, const char *src_channel, const char *d
 // The function locks the conference mutex as required
 static void do_video_switching(struct ast_conference *conf, int new_id, int lock)
 {
-  ast_log( LOG_ERROR, "HACK3 $$$$$$$$$$$ do_video_switching\n");
 	if ( conf == NULL ) return;
 
 	if ( lock )

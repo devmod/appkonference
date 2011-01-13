@@ -41,6 +41,9 @@ exten => <ext>,<pri>,Konference(<confname>,<flags>,<optional args>,<more optiona
 	'a' : V + T
 	'H' : play music on hold if only one member in conference
 
+  Streamoso:
+  'K' : Connects the last two endpoints to enter the conference through video.
+
 	Future development (these are not implemented yet):
 	?
 
