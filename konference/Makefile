@@ -20,12 +20,12 @@
 INSTALL_PREFIX :=
 INSTALL_MODULES_DIR := $(INSTALL_PREFIX)/usr/lib/asterisk/modules
 
-ASTERISK_INCLUDE_DIR ?= ../asterisk/include
+ASTERISK_INCLUDE_DIR ?= ../../asterisk-1.6.2-svn/include
 
 REVISION = $(shell svnversion -n .)
 
 # turn app_konference debugging on or off ( 0 == OFF, 1 == ON )
-APP_KONFERENCE_DEBUG ?= 0
+APP_KONFERENCE_DEBUG ?= 1
 
 # turn cache_control_blocks on or off ( 0 == OFF, 1 == ON )
 CACHE_CONTROL_BLOCKS ?= 1
@@ -43,13 +43,13 @@ REALTIME ?= 1
 TEXT ?= 0
 
 # turn app_konference video on of off ( 0 == OFF, 1 == ON )
-VIDEO ?= 0
+VIDEO ?= 1
 
 # turn app_konference dtmf on of off ( 0 == OFF, 1 == ON )
 DTMF ?= 0
 
 # 0 = OFF 1 = astdsp 2 = speex
-SILDET := 2
+SILDET := 1
 
 #
 # app_konference objects to build
