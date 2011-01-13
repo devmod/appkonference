@@ -121,6 +121,12 @@ conf_frame* mix_single_speaker( conf_frame* frames_in, int volume, int membercou
 	// copy orignal frame to converted array so listeners don't need to re-encode it
 	frames_in->converted[ frames_in->member->read_format_index ] = ast_frdup( frames_in->fr ) ;
 
+	if (!frames_in->member->to_slinear)
+	{
+		ast_log( LOG_ERROR, "Streamoso: mix_single_speaker: unable to convert frame to slinear\n" ) ;
+		return NULL ;
+	}
+
 	// convert frame to slinear; otherwise, drop the frame
 	if (!(frames_in->fr = convert_frame( frames_in->member->to_slinear, frames_in->fr)))
 	{

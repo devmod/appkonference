@@ -204,7 +204,8 @@ struct ast_conf_member
 #ifdef	VIDEO
 	// conference does chat mode (1 on 1 video when two members in conference)
 	short does_chat_mode;
-
+  // Streamoso custom video mode
+  short does_custom_video;
 	// Timeouts for VAD based video switching (in ms)
 	// Length of audio needed to decide that the member has started talking
 	int video_start_timeout;

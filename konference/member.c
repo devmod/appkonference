@@ -157,30 +157,72 @@ static int process_incoming(struct ast_conf_member *member, struct ast_conferenc
 	{
 		int req_id = member->req_id;
 		ast_mutex_unlock( &member->lock );
-		// this will return NULL or a locked member
-		src_member = check_active_video(req_id,conf);
-		// Stream a picture to the recipient if no active video
-		if (!src_member)
-		{
-			// Mihai: we don't want to send video here, we cannot negotiate codec
-			// and we don't know what codec the conference is using
-			//if (member->norecv_video == 0)
-			//{
-			//	if(!ast_streamfile(member->chan,"novideo",member->chan->language))
-			//	{
-			//		ast_waitstream(member->chan,"");
-			//	}
-			//}
-		}
-		else
-		{
-			// Send a FIR to the new sender
-			ast_indicate(src_member->chan,AST_CONTROL_VIDUPDATE);
-			// we will have locked in check_active_video()
-			ast_mutex_unlock( &src_member->lock);
-		}
-		ast_mutex_lock( &member->lock );
-		member->conference = 0;
+    
+    if(conf->does_custom_video)
+    {
+          //ast_log( LOG_ERROR, "VIDUP custom from member->id:%d\n", member->id);
+          //Find latest two endpoints supporting video_broadcast_active 
+			    struct ast_conf_member *m1 = NULL, *m2 = NULL;
+			    m1 = conf->memberlist;
+          while(m1 && !m1->does_custom_video)
+            m1=m1->next;
+          m2 = (m1 ? m1->next : NULL);
+          while(m2 && !m2->does_custom_video)
+            m2=m2->next;
+
+          if(m1 && !m2) //Only one enabled endpoint
+          {
+            //ast_log( LOG_ERROR, "VIDUP custom (1) sending TO m1->id:%d\n", m1->id);
+            //send to itself
+            ast_mutex_lock( &m1->lock);
+    			  ast_indicate(m1->chan,AST_CONTROL_VIDUPDATE);
+            ast_mutex_unlock( &m1->lock);
+
+          } else if(m1 && m2)
+          { 
+            if(m1 == member)
+            {
+              //ast_log( LOG_ERROR, "VIDUP custom (2.1) sending TO m2->id:%d\n", m2->id);
+              ast_mutex_lock( &m2->lock);
+              ast_indicate(m2->chan,AST_CONTROL_VIDUPDATE);
+              ast_mutex_unlock( &m2->lock);
+            } else if(m2 == member) 
+            {
+              //ast_log( LOG_ERROR, "VIDUP custom (2.2) sending TO m1->id:%d\n", m1->id);
+              ast_mutex_lock( &m1->lock);
+      			  ast_indicate(m1->chan,AST_CONTROL_VIDUPDATE);
+              ast_mutex_unlock( &m1->lock);                
+            }
+          }          
+    } else {
+		  // this will return NULL or a locked member
+		  src_member = check_active_video(req_id,conf);
+		  // Stream a picture to the recipient if no active video
+		  if (!src_member)
+		  {
+        //ast_log( LOG_ERROR, "VIDUP doing nothing\n");
+			  // Mihai: we don't want to send video here, we cannot negotiate codec
+			  // and we don't know what codec the conference is using
+			  //if (member->norecv_video == 0)
+			  //{
+			  //	if(!ast_streamfile(member->chan,"novideo",member->chan->language))
+			  //	{
+			  //		ast_waitstream(member->chan,"");
+			  //	}
+			  //}
+		  }
+		  else
+		  {
+        //ast_log( LOG_ERROR, "VIDUP sending vidup\n");
+			  // Send a FIR to the new sender
+			  ast_indicate(src_member->chan,AST_CONTROL_VIDUPDATE);
+			  // we will have locked in check_active_video()
+			  ast_mutex_unlock( &src_member->lock);
+		  }
+    }
+	  ast_mutex_lock( &member->lock );
+	  member->conference = 0;
+
 	}
 	ast_mutex_unlock( &member->lock );
 #endif
@@ -1147,9 +1189,13 @@ struct ast_conf_member* create_member( struct ast_channel *chan, const char* dat
 		{
 			// allowed flags are C, c, L, l, V, D, A, C, X, R, T, t, M, S, z, o, F, H
 			// mute/no_recv options
+      //Streamoso flags : K
 			switch ( flags[i] )
 			{
 #ifdef	VIDEO
+      case 'K':
+        member->does_custom_video = 1;
+        break;
 			case 'C':
 				member->mute_video = 1;
 				break ;

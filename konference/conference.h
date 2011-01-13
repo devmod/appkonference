@@ -130,7 +130,10 @@ struct ast_conference
 #ifdef	VIDEO
 	// the conference does chat mode: special treatment for situations with 1 and 2 members
 	short does_chat_mode;
-
+  //Streamoso custom video mode
+  short does_custom_video;
+  //Streamoso fix for vid switching
+  short vad_switch;
 	// chat mode is on;
 	short chat_mode_on;
 #endif	
