@@ -1203,7 +1203,8 @@ void remove_member( struct ast_conf_member* member, struct ast_conference* conf,
 
 	if ( member->ismoderator && member->kick_conferees )
 		conf->kick_flag = 1 ;
-
+	else if ( conf->membercount  <= 2 ) 
+		conf->kick_flag = 1;
 #ifdef	VIDEO
 	struct ast_conf_member *member_list = conf->memberlist ;
 	struct ast_conf_member *member_temp = NULL ;
