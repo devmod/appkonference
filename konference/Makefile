@@ -20,7 +20,7 @@
 INSTALL_PREFIX :=
 INSTALL_MODULES_DIR := $(INSTALL_PREFIX)/usr/lib/asterisk/modules
 
-ASTERISK_INCLUDE_DIR ?= ../../asterisk-1.6.2-svn/include
+ASTERISK_INCLUDE_DIR ?= ../../asterisk-1.6-svn/include
 
 REVISION = $(shell svnversion -n .)
 
@@ -49,7 +49,7 @@ VIDEO ?= 1
 DTMF ?= 0
 
 # 0 = OFF 1 = astdsp 2 = speex
-SILDET := 1
+SILDET := 0
 
 #
 # app_konference objects to build
