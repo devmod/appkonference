@@ -46,7 +46,7 @@ TEXT ?= 0
 VIDEO ?= 1
 
 # turn app_konference dtmf on of off ( 0 == OFF, 1 == ON )
-DTMF ?= 0
+DTMF ?= 1
 
 # 0 = OFF 1 = astdsp 2 = speex
 SILDET := 0
